@@ -60,7 +60,7 @@ const API = window.BOARD_CONFIG && window.BOARD_CONFIG.api;
 document.getElementById('title').textContent = (C.title || COURSE) + ' · Week ' + WEEK;
 document.title = (C.title || 'Live Poll') + ' · Week ' + WEEK;
 
-let D = null, cur = 0, last = '', view = 'themes';
+let D = null, cur = Math.max(0, Number(P.get('q') || 1) - 1), last = '', view = 'themes';
 const TH = {};           // formId -> themes result
 const QRC = {};          // url -> qr data url
 const pal = ['#13305a','#c48f2c','#1f6f8b','#7a3e9d','#2e7d32','#b23a48','#455a64'];
