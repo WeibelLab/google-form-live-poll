@@ -226,14 +226,15 @@ function callClaude_(apiKey, question, answers, prevLabels) {
 }
 
 /**
- * Credit export (private). Writes one tab per week to the "Participation credit"
- * Sheet in the course folder: email, then one column per question with the
- * response time, and the number answered. Run from the editor or the menu.
+ * Credit export (private). Sheet "Participation credit" in the course folder:
+ *   - tab "Summary": one row per student, per week the number of questions
+ *     answered, and the number of weeks with at least one answer
+ *   - tab "Week NN": email, response time per question, number answered
+ * Run exportCreditAllWeeks from the editor, or installCreditTrigger once to
+ * refresh it every hour.
  */
-function exportCredit(week) {
-  week = Number(week) || Number(PropertiesService.getScriptProperties().getProperty('CREDIT_WEEK')) || 1;
-  const root = COURSE.folderId;
-  const forms = weekForms_(root, week);
+function creditWeek_(week) {
+  const forms = weekForms_(COURSE.folderId, week);
   const byEmail = {};
   forms.forEach(function (f, i) {
     FormApp.openById(f.id).getResponses().forEach(function (r) {
@@ -243,32 +244,64 @@ function exportCredit(week) {
       byEmail[em][i] = r.getTimestamp();
     });
   });
-  const folder = DriveApp.getFolderById(root);
+  return { forms: forms, byEmail: byEmail };
+}
+
+function creditSheet_() {
+  const folder = DriveApp.getFolderById(COURSE.folderId);
   const it = folder.getFilesByName('Participation credit');
-  let ss;
-  if (it.hasNext()) ss = SpreadsheetApp.open(it.next());
-  else {
-    ss = SpreadsheetApp.create('Participation credit');
-    DriveApp.getFileById(ss.getId()).moveTo(folder);
-  }
-  const tab = 'Week ' + ('0' + week).slice(-2);
-  const sh = ss.getSheetByName(tab) || ss.insertSheet(tab);
+  if (it.hasNext()) return SpreadsheetApp.open(it.next());
+  const ss = SpreadsheetApp.create('Participation credit');
+  DriveApp.getFileById(ss.getId()).moveTo(folder);
+  return ss;
+}
+
+function writeTab_(ss, name, head, rows) {
+  const sh = ss.getSheetByName(name) || ss.insertSheet(name);
   sh.clear();
-  const head = ['email'].concat(forms.map(function (f) { return f.title; })).concat(['answered']);
-  const rows = Object.keys(byEmail).sort().map(function (em) {
-    const cols = byEmail[em];
-    return [em].concat(cols).concat([cols.filter(function (c) { return c !== ''; }).length]);
-  });
   sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold');
   if (rows.length) sh.getRange(2, 1, rows.length, head.length).setValues(rows);
-  const def = ss.getSheetByName('Sheet1');
-  if (def && ss.getSheets().length > 1) ss.deleteSheet(def);
-  Logger.log(rows.length + ' students written to ' + tab + ': ' + ss.getUrl());
-  return ss.getUrl();
+  sh.setFrozenRows(1);
+  return sh;
 }
 
 function exportCreditAllWeeks() {
-  Object.keys(COURSE.weeks).forEach(function (w) { exportCredit(Number(w)); });
+  const ss = creditSheet_();
+  const weeks = Object.keys(COURSE.weeks).map(Number).sort(function (a, b) { return a - b; });
+  const summary = {};
+  weeks.forEach(function (w, wi) {
+    const c = creditWeek_(w);
+    const tab = 'Week ' + ('0' + w).slice(-2);
+    const head = ['email'].concat(c.forms.map(function (f) { return f.title; })).concat(['answered']);
+    const rows = Object.keys(c.byEmail).sort().map(function (em) {
+      const cols = c.byEmail[em];
+      const n = cols.filter(function (x) { return x !== ''; }).length;
+      summary[em] = summary[em] || weeks.map(function () { return 0; });
+      summary[em][wi] = n;
+      return [em].concat(cols).concat([n]);
+    });
+    writeTab_(ss, tab, head, rows);
+  });
+  const head = ['email'].concat(weeks.map(function (w) { return 'Week ' + w; })).concat(['weeks participated', 'questions answered']);
+  const rows = Object.keys(summary).sort().map(function (em) {
+    const v = summary[em];
+    return [em].concat(v).concat([v.filter(function (n) { return n > 0; }).length, v.reduce(function (a, b) { return a + b; }, 0)]);
+  });
+  const sh = writeTab_(ss, 'Summary', head, rows);
+  ss.setActiveSheet(sh);
+  ss.moveActiveSheet(1);
+  const def = ss.getSheetByName('Sheet1');
+  if (def) ss.deleteSheet(def);
+  Logger.log(rows.length + ' students. ' + ss.getUrl());
+  return ss.getUrl();
+}
+
+function installCreditTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'exportCreditAllWeeks') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('exportCreditAllWeeks').timeBased().everyHours(1).create();
+  Logger.log('Credit sheet refreshes every hour.');
 }
 
 // One-time: create the board key. Shown in the execution log.
