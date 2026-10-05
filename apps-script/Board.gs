@@ -111,7 +111,10 @@ function weekData_(root, week) {
 // Aggregate one form (f from weekForms_). Counts and words only, never emails.
 function aggregateForm_(f) {
   const at = Date.now();
-  const ans = answers_(FormApp.openById(f.id), f.itemId);
+  const form = FormApp.openById(f.id);
+  const ans = answers_(form, f.itemId);
+  const rs = form.getResponses();
+  const last = rs.length ? rs[rs.length - 1].getTimestamp().getTime() : 0;
   let items;
   if (f.kind === 'bars') {
     const c = {};
@@ -140,7 +143,7 @@ function aggregateForm_(f) {
       return [best, c[k]];
     }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 150);
   }
-  return { formId: f.id, title: f.title, kind: f.kind, url: f.url, n: ans.length, items: items, at: at };
+  return { formId: f.id, title: f.title, kind: f.kind, url: f.url, n: ans.length, items: items, at: at, last: last };
 }
 
 // Themes for a long-text form. Recomputed only when the answer count changed.
