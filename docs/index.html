@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live Poll Board</title>
+<style>
+:root{--navy:#13305a;--gold:#deb160;--bg:#f6f7fb;--ink:#1b2433;--muted:#667;--track:#e8ecf3}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 24px;background:var(--navy);color:#fff;border-bottom:6px solid var(--gold)}
+header .t{font-size:24px;font-weight:700}
+header .n{font-size:20px;color:var(--gold);white-space:nowrap}
+main{display:flex;gap:20px;padding:20px 24px;height:calc(100vh - 74px)}
+#stage{flex:1;min-width:0;background:#fff;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.06);padding:20px 26px;display:flex;flex-direction:column}
+#q{font-size:clamp(22px,2.6vw,36px);font-weight:700;color:var(--navy);margin:0 0 6px;line-height:1.2}
+#sub{font-size:15px;color:var(--muted);margin-bottom:10px}
+#viz{flex:1;position:relative;overflow:auto}
+.bar{display:flex;align-items:center;margin:14px 0;font-size:clamp(16px,1.6vw,22px)}
+.bar .lab{width:32%;padding-right:12px}
+.bar .trk{flex:1;background:var(--track);border-radius:8px;height:42px;overflow:hidden}
+.bar .fill{height:100%;background:var(--navy);border-radius:8px;transition:width .5s}
+.bar .pct{width:120px;text-align:right;font-weight:700}
+.theme{margin:12px 0}
+.theme .head{display:flex;align-items:center;gap:12px;font-size:clamp(16px,1.6vw,22px);font-weight:700;color:var(--navy)}
+.theme .trk{flex:1;background:var(--track);border-radius:8px;height:30px;overflow:hidden}
+.theme .fill{height:100%;background:var(--gold);transition:width .5s}
+.theme .cnt{width:60px;text-align:right}
+.theme .sum{font-size:15px;color:#334;margin:4px 0 2px}
+.theme .ex{font-size:15px;color:var(--muted);font-style:italic}
+#cloud{width:100%;height:100%;display:block}
+aside{width:280px;background:#fff;border-radius:14px;padding:16px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+aside .h{font-weight:700;color:var(--navy);font-size:20px;margin-bottom:8px}
+#qr{display:flex;justify-content:center}
+#qr img,#qr canvas{width:100%!important;height:auto!important}
+.nav{font-size:13px;color:#889;margin-top:10px;line-height:1.5}
+.hide{display:none!important}
+#msg{color:#b23a48;font-size:14px;margin-top:8px}
+@media (max-width:800px){main{flex-direction:column;height:auto}aside{width:100%}.bar .lab{width:40%}.bar .pct{width:80px}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.2.2/wordcloud2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="config.js"></script>
+</head>
+<body>
+<header><div class="t" id="title">Live Poll</div><div class="n" id="count"></div></header>
+<main>
+  <section id="stage"><div id="q">Loading…</div><div id="sub"></div><div id="viz"></div><div id="msg"></div></section>
+  <aside id="qrbox"><div class="h">Answer here</div><div id="qr"></div><div>Sign in with your UCSD account</div>
+    <div class="nav">← → or 1-9: question · Q: QR code<br>T: themes / words</div></aside>
+</main>
+<script>
+const P = new URLSearchParams(location.search);
+const KEY = new URLSearchParams(location.hash.slice(1)).get('k') || '';
+const COURSE = P.get('course') || 'cse291a';
+const WEEK = Number(P.get('week') || 1);
+const C = (window.BOARD_CONFIG && window.BOARD_CONFIG.courses[COURSE]) || {};
+const API = window.BOARD_CONFIG && window.BOARD_CONFIG.api;
+document.getElementById('title').textContent = (C.title || COURSE) + ' · Week ' + WEEK;
+document.title = (C.title || 'Live Poll') + ' · Week ' + WEEK;
+
+let D = null, cur = 0, last = '', view = 'themes';
+const TH = {};           // formId -> themes result
+const QRC = {};          // url -> qr data url
+const pal = ['#13305a','#c48f2c','#1f6f8b','#7a3e9d','#2e7d32','#b23a48','#455a64'];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function qr(url) {
+  const box = document.getElementById('qr');
+  if (box.dataset.url === url) return;
+  box.dataset.url = url; box.innerHTML = '';
+  new QRCode(box, { text: url, width: 512, height: 512, correctLevel: QRCode.CorrectLevel.M });
+}
+
+function draw(force) {
+  if (!D || !D.slides || !D.slides.length) return;
+  cur = Math.max(0, Math.min(cur, D.slides.length - 1));
+  const s = D.slides[cur], th = TH[s.formId];
+  const showThemes = s.kind === 'long' && view === 'themes' && th && th.themes && th.themes.length;
+  const key = JSON.stringify([cur, s.items, showThemes ? th : 0, view]);
+  document.getElementById('count').textContent = s.n + ' response' + (s.n === 1 ? '' : 's');
+  document.getElementById('q').textContent = s.title;
+  document.getElementById('sub').textContent = `Question ${cur + 1} of ${D.slides.length}` +
+    (s.kind === 'long' ? (showThemes ? ' · themes by Claude, from ' + th.n + ' answers' : ' · words') : '');
+  qr(s.url);
+  if (key === last && !force) return;
+  last = key;
+  const v = document.getElementById('viz'); v.innerHTML = '';
+  if (s.kind === 'bars') {
+    const tot = s.items.reduce((a, x) => a + x[1], 0) || 1;
+    for (const [o, k] of s.items) {
+      const p = Math.round(100 * k / tot);
+      v.insertAdjacentHTML('beforeend', `<div class="bar"><div class="lab">${esc(o)}</div><div class="trk"><div class="fill" style="width:${p}%"></div></div><div class="pct">${p}% (${k})</div></div>`);
+    }
+  } else if (showThemes) {
+    const max = Math.max(1, ...th.themes.map(t => t.count));
+    for (const t of th.themes) {
+      v.insertAdjacentHTML('beforeend', `<div class="theme"><div class="head"><span style="min-width:30%">${esc(t.label)}</span><div class="trk"><div class="fill" style="width:${Math.round(100 * t.count / max)}%"></div></div><span class="cnt">${t.count}</span></div><div class="sum">${esc(t.summary)}</div>${t.example ? `<div class="ex">“${esc(t.example)}”</div>` : ''}</div>`);
+    }
+  } else {
+    const c = document.createElement('canvas'); c.id = 'cloud'; v.appendChild(c);
+    c.width = v.clientWidth; c.height = v.clientHeight;
+    const max = Math.max(1, ...s.items.map(x => x[1]));
+    const sc = Math.min(c.width / 800, c.height / 450);
+    const words = s.items.map(([w, k]) => [w, Math.round((18 + 92 * Math.sqrt(k / max)) * sc)]);
+    if (words.length) WordCloud(c, { list: words, fontFamily: '-apple-system,Helvetica,Arial', fontWeight: '700',
+      color: () => pal[Math.floor(Math.random() * pal.length)], rotateRatio: 0, gridSize: 10, shuffle: false, backgroundColor: '#fff' });
+  }
+}
+
+async function get(params) {
+  const u = API + '?' + new URLSearchParams(Object.assign({ key: KEY, course: COURSE }, params));
+  const r = await fetch(u, { cache: 'no-store' });
+  return r.json();
+}
+
+async function tick() {
+  try {
+    const d = await get({ week: WEEK });
+    if (d.error) { document.getElementById('msg').textContent = d.error; }
+    else { D = d; document.getElementById('msg').textContent = ''; draw(false); }
+  } catch (e) { document.getElementById('msg').textContent = 'Connection problem, retrying'; }
+  setTimeout(tick, 700);
+}
+
+async function themeTick() {
+  try {
+    if (D && D.slides[cur] && D.slides[cur].kind === 'long' && D.slides[cur].n >= 3) {
+      const s = D.slides[cur];
+      if (!TH[s.formId] || TH[s.formId].n !== s.n) {
+        const t = await get({ action: 'themes', form: s.formId });
+        if (!t.error) { TH[s.formId] = t; draw(false); }
+      }
+    }
+  } catch (e) {}
+  setTimeout(themeTick, 8000);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') { cur++; draw(true); }
+  else if (e.key === 'ArrowLeft') { cur--; draw(true); }
+  else if (/^[1-9]$/.test(e.key)) { cur = +e.key - 1; draw(true); }
+  else if (e.key === 'q' || e.key === 'Q') { document.getElementById('qrbox').classList.toggle('hide'); setTimeout(() => draw(true), 50); }
+  else if (e.key === 't' || e.key === 'T') { view = view === 'themes' ? 'words' : 'themes'; draw(true); }
+});
+window.addEventListener('resize', () => draw(true));
+if (!API || !KEY) document.getElementById('q').textContent = 'Board link is missing its key.';
+else { tick(); themeTick(); }
+</script>
+</body>
+</html>
