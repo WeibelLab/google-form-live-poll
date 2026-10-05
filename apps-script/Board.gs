@@ -75,9 +75,9 @@ function describeForm_(id) {
   const d = { id: id, itemId: item.getId(), title: item.getTitle(), kind: 'cloud', choices: [], url: form.getPublishedUrl() };
   const vals = function (cs) { return cs.map(function (c) { return c.getValue(); }); };
   if (t === T_.PARAGRAPH_TEXT) d.kind = 'long';
-  else if (t === T_.MULTIPLE_CHOICE) { d.kind = 'bars'; d.choices = vals(item.asMultipleChoiceItem().getChoices()); }
+  else if (t === T_.MULTIPLE_CHOICE) { d.kind = 'bars'; d.choices = vals(item.asMultipleChoiceItem().getChoices()); d.other = item.asMultipleChoiceItem().hasOtherOption(); }
   else if (t === T_.LIST) { d.kind = 'bars'; d.choices = vals(item.asListItem().getChoices()); }
-  else if (t === T_.CHECKBOX) { d.kind = 'bars'; d.multi = true; d.choices = vals(item.asCheckboxItem().getChoices()); }
+  else if (t === T_.CHECKBOX) { d.kind = 'bars'; d.multi = true; d.choices = vals(item.asCheckboxItem().getChoices()); d.other = item.asCheckboxItem().hasOtherOption(); }
   else if (t === T_.SCALE) {
     const sc = item.asScaleItem();
     d.kind = 'scale'; d.lo = sc.getLowerBound(); d.hi = sc.getUpperBound();
@@ -146,7 +146,10 @@ function aggregateForm_(f) {
     const c = {};
     ans.forEach(function (a) { c[a] = (c[a] || 0) + 1; });
     out.items = f.choices.map(function (o) { return [o, c[o] || 0]; });
-    Object.keys(c).forEach(function (o) { if (f.choices.indexOf(o) < 0) out.items.push([o, c[o]]); });
+    // Typed-in "Other" answers count as one bar (the text itself is not shown).
+    let other = 0;
+    Object.keys(c).forEach(function (o) { if (f.choices.indexOf(o) < 0) other += c[o]; });
+    if (f.other || other) out.items.push(['Other', other]);
     out.multi = !!f.multi;
   } else if (f.kind === 'scale') {
     const c = {}; let sum = 0;

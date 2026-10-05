@@ -169,69 +169,85 @@ function writeManifest_(manifest) {
  * long (paragraph, Claude themes), scale [lo, hi, leftLabel, rightLabel], grid {rows, cols}.
  */
 const AGREE = [1, 5, 'Strongly disagree', 'Strongly agree'];
+// Choices informed by last year's "Discussion Highlights" slides (CSE 291A FA25, DSC 266R WI25/WI26).
 const WEEK_QUESTIONS = {
+  2: [
+    { q: "Now that we've seen some potential harms, what are the benefits of open sourcing a model?" },
+    { q: 'Do you believe the pros outweigh the cons?', choices: ['Yes', 'No', 'It depends'], other: true },
+    { q: 'When should a model be open sourced?', other: true,
+      choices: ['Always, openness outweighs the risks', 'After an independent safety review', 'In stages, smaller or safer versions first',
+                'Case by case, depending on benefits and safeguards', 'Only to vetted researchers', 'Never for highly capable models'] },
+  ],
   3: [
-    { q: 'How can users be integrated into the bias mitigation process?' },
+    { q: 'How can users be part of the bias mitigation process? (pick up to 2)', multi: true, max: 2, other: true,
+      choices: ['Feedback and reporting tools', 'Participatory co-design', 'Diverse user testing', 'User education and AI literacy', 'Community advisory panels'] },
     { q: 'How helpful would each governance structure be for bias mitigation?',
-      grid: { rows: ['Internal ethics board', 'Independent external audit', 'Government regulation', 'User or community advisory panel', 'Open public scrutiny'],
+      grid: { rows: ['Multi-stakeholder board (ethicists, developers, users, legal)', 'Independent external audits', 'Government regulation',
+                     'Community representatives', 'Risk frameworks (e.g. NIST AI RMF)'],
               cols: ['Not helpful', 'Somewhat helpful', 'Very helpful'] } },
-    { q: 'Should creatives adapt and reskill to work alongside AI systems?',
+    { q: 'Should creatives adapt and reskill to work alongside AI systems?', other: true,
       choices: ["Yes, it's necessary", 'Yes, with consent and pay protections', 'Only if they choose to', 'No, limit AI use instead'] },
   ],
   4: [
     { q: "In one word: a problem you've experienced that AI could help with", short: true },
-    { q: 'Which pitfall is most likely to sink an AI solution?',
-      choices: ['Biased or missing data', 'Solves the wrong problem', "Users don't trust it", 'Privacy risk', 'Too costly to maintain'] },
+    { q: 'Which problem-framing pitfall do you fall into most?', other: true,
+      choices: ['Solutioneering', 'Anchoring', 'Wishlisting', 'Presuming', 'Catastrophizing', 'Buzzwording', 'Hamstringing'] },
     { q: 'What question should you ask before deciding a problem needs AI?' },
   ],
   5: [
-    { q: 'At which automation level does responsibility shift most from the driver to the system?',
-      choices: ['Level 1-2 (driver assistance)', 'Level 3 (conditional)', 'Level 4 (high)', 'Level 5 (full)'] },
-    { q: 'Which concern grows most as driving automation increases?',
-      choices: ['Safety', 'Accountability', 'Privacy', 'Fairness', 'Transparency'] },
+    { q: 'Up to which automation level would you ride in a self-driving car today?',
+      choices: ['Level 2 (partial)', 'Level 3 (conditional)', 'Level 4 (high)', 'Level 5 (full)', 'None'] },
+    { q: 'What is your biggest concern as driving automation increases?', other: true,
+      choices: ['Edge cases and unpredictability', 'Accountability for accidents', 'Transparency of decisions', 'Security and hacking', 'Job loss', 'Losing driving skills'] },
     { q: 'Which always-on consideration changes most as cars become more autonomous, and why?' },
   ],
   6: [
-    { q: 'Observing users for needfinding on dating apps is...',
+    { q: 'Observing users for needfinding on dating apps is...', other: true,
       choices: ['Fine with consent', 'Fine only with anonymized data', 'Too invasive in most cases', 'Never acceptable'] },
     { q: 'In one word: a daily interaction that matters to you', short: true },
     { q: 'How would you resolve a gap between what you find meaningful and what a user finds meaningful?' },
   ],
   7: [
     { q: 'Many false positives are an acceptable price for avoiding a single false negative in TSA screening.', scale: AGREE },
-    { q: 'Who should set the acceptable false positive rate?',
+    { q: 'Who should set the acceptable false positive rate?', other: true,
       choices: ['TSA / government', 'Engineers who build the system', 'Travelers and the public', 'An independent oversight body'] },
     { q: 'What would make false positives less harmful to travelers?' },
   ],
   8: [
-    { q: 'For the North-America-only plant dataset, what is cheaper?',
+    { q: 'For the North-America-only plant dataset, what is cheaper?', other: true,
       choices: ['Diverse data from the start', 'Fixing it after launch', 'About the same', 'Depends on the harm caused'] },
     { q: 'The benefits of tracking employee demographic data outweigh the risks.', scale: AGREE },
     { q: 'What risk of collecting demographic data worries you most?' },
   ],
   9: [
     { q: 'In one word: an attribute missing from the protected list', short: true },
-    { q: 'To correct a biased model, what would you change first?',
+    { q: 'To correct a biased model, what would you change first?', other: true,
       choices: ['Collect more representative data', 'Reweight or resample the data', 'Use a different fairness metric', 'Adjust decision thresholds', 'Remove sensitive features'] },
     { q: 'What surprised you when exploring word embeddings in WebVectors?' },
+    { q: 'Should political affiliation be a protected attribute?',
+      choices: ['Yes', 'No', 'Only for employment and housing', 'Not sure'] },
   ],
   10: [
     { q: "Was Facebook's emotional contagion experiment ethical?", choices: ['Yes', 'No', 'Legal but not ethical', 'Not sure'] },
-    { q: 'Should users be told about studies beforehand, even if the results are less accurate?',
-      choices: ['Always', 'Only after the study', 'Only for higher-risk studies', 'No'] },
+    { q: 'Should users be told about studies beforehand, even if the results are less accurate?', other: true,
+      choices: ['Always, with informed consent', 'Yes, but not the exact timing', 'Only afterwards (debrief)', 'Only for higher-risk studies', 'No'] },
     { q: 'What is missing from the 2023 AI executive order?' },
   ],
 };
 
 function addItem_(form, spec) {
-  if (spec.choices) form.addMultipleChoiceItem().setTitle(spec.q).setChoiceValues(spec.choices).setRequired(true);
+  if (spec.choices && spec.multi) {
+    const cb = form.addCheckboxItem().setTitle(spec.q).setChoiceValues(spec.choices).showOtherOption(!!spec.other).setRequired(true);
+    if (spec.max) cb.setValidation(FormApp.createCheckboxValidation().requireSelectAtMost(spec.max).build());
+  }
+  else if (spec.choices) form.addMultipleChoiceItem().setTitle(spec.q).setChoiceValues(spec.choices).showOtherOption(!!spec.other).setRequired(true);
   else if (spec.scale) form.addScaleItem().setTitle(spec.q).setBounds(spec.scale[0], spec.scale[1]).setLabels(spec.scale[2], spec.scale[3]).setRequired(true);
   else if (spec.grid) form.addGridItem().setTitle(spec.q).setRows(spec.grid.rows).setColumns(spec.grid.cols).setRequired(true);
   else if (spec.short) form.addTextItem().setTitle(spec.q).setRequired(true);
   else form.addParagraphTextItem().setTitle(spec.q).setRequired(true);
 }
 
-// Rewrite the question of each form WNN Qn in weeks 3-10. Skips forms that already have responses.
+// Rewrite the question of each form WNN Qn listed in WEEK_QUESTIONS (creates missing ones). Skips forms that already have responses.
 function applyWeekQuestions() {
   const log = [];
   Object.keys(WEEK_QUESTIONS).forEach(function (w) {
@@ -242,7 +258,12 @@ function applyWeekQuestions() {
       const files = folder.getFilesByType(MimeType.GOOGLE_FORMS);
       let file = null;
       while (files.hasNext()) { const f = files.next(); if (f.getName().indexOf(prefix) === 0) { file = f; break; } }
-      if (!file) { log.push(prefix + 'missing'); return; }
+      if (!file) {
+        ensureForm_(Number(w), i + 1, spec);   // new question: copy the styled master, settings, response Sheet
+        const again = folder.getFilesByType(MimeType.GOOGLE_FORMS);
+        while (again.hasNext()) { const f = again.next(); if (f.getName().indexOf(prefix) === 0) { file = f; break; } }
+        if (!file) { log.push(prefix + 'could not create'); return; }
+      }
       const form = FormApp.openById(file.getId());
       if (form.getResponses().length) { log.push(prefix + 'has responses, skipped'); return; }
       form.getItems().forEach(function (it) { form.deleteItem(it); });
