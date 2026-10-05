@@ -115,13 +115,17 @@ async function get(params) {
   return r.json();
 }
 
+// Overlapping polls: a new request every 500 ms, at most 3 in flight; keep the newest result.
+let inflight = 0, lastAt = 0;
 async function tick() {
+  if (inflight >= 3) return;
+  inflight++;
   try {
     const d = await get({ week: WEEK });
     if (d.error) { document.getElementById('msg').textContent = d.error; }
-    else { D = d; document.getElementById('msg').textContent = ''; draw(false); }
+    else if (d.at >= lastAt) { lastAt = d.at; D = d; document.getElementById('msg').textContent = ''; draw(false); }
   } catch (e) { document.getElementById('msg').textContent = 'Connection problem, retrying'; }
-  setTimeout(tick, 700);
+  inflight--;
 }
 
 async function themeTick() {
@@ -146,7 +150,7 @@ document.addEventListener('keydown', e => {
 });
 window.addEventListener('resize', () => draw(true));
 if (!API || !KEY) document.getElementById('q').textContent = 'Board link is missing its key.';
-else { tick(); themeTick(); }
+else { tick(); setInterval(tick, 500); themeTick(); }
 </script>
 </body>
 </html>
