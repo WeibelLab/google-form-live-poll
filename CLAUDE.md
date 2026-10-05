@@ -41,7 +41,6 @@ Slido-style live poll board on Google Forms for CSE 291A (Fall 2026). Owner: Nad
 
 ## Open items
 
-- Discussion Polls folder is shared as editor with wel008 (TA) and aabroukh; response Sheets inherit that. Nadir to confirm aabroukh.
 - Clustering method for long answers.
 - Nadir to: run `createBoardKey`, add `ANTHROPIC_API_KEY`, deploy web app (Anyone), send web app URL. Then test with Week 1 (not Week 2) and measure latency; Nadir deletes the test response.
 - aabroukh access confirmed OK by Nadir (2026-10-05).
