@@ -6,18 +6,18 @@
  * Database rules: public read on /boards/$key only, no client writes.
  * Writes use the script owner's OAuth token (scopes in appsscript.json).
  *
- * Script property FIREBASE_URL, e.g. https://<project>-default-rtdb.firebaseio.com
+ * Database: Firebase project google-form-live-poll (ID form-live-poll).
  *
  * Google allows 20 triggers per script, so submit triggers cover only the
  * current and next week. syncTriggers runs daily at 6 am to move them.
  */
 
 const PUSH_COURSE = 'cse291a';
+const FIREBASE_URL = 'https://form-live-poll-default-rtdb.firebaseio.com';
 
 function fbPut_(path, data) {
   const props = PropertiesService.getScriptProperties();
-  const base = props.getProperty('FIREBASE_URL');
-  if (!base) throw new Error('FIREBASE_URL not set');
+  const base = props.getProperty('FIREBASE_URL') || FIREBASE_URL;
   const url = base.replace(/\/$/, '') + '/boards/' + props.getProperty('BOARD_KEY') + '/' + path + '.json';
   const r = UrlFetchApp.fetch(url, {
     method: 'put',
