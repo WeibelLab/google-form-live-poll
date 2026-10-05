@@ -48,3 +48,4 @@ Slido-style live poll board on Google Forms for CSE 291A (Fall 2026). Owner: Nad
 ## Current state
 
 - 2026-10-05: 30 forms created and verified (theme, UCSD-only, verified email). `prototype/manifest_cse291a_fa26.json` holds all IDs. Local board configs `prototype/cse291a_weekNN.json`; Week 2 board tested against the real Sheets (0 responses). Hosted board, wizard, credit export UI and clustering not built yet.
+- 2026-10-05 Week 1 test (Nadir's own response, W01 Q1 "Grad: CSE PhD"): verified email recorded, second attempt shows "You've already responded". Latency Submit -> endpoint data: 3.2 s (response readable server-side after ~1.2 s; each web app round trip ~2.0 s). Target 2 s not met with polling; push (onFormSubmit -> Firebase RTDB) proposed. Test response still to be deleted by Nadir.
