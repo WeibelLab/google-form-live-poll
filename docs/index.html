@@ -123,9 +123,30 @@ async function tick() {
   try {
     const d = await get({ week: WEEK });
     if (d.error) { document.getElementById('msg').textContent = d.error; }
-    else if (d.at >= lastAt) { lastAt = d.at; D = d; document.getElementById('msg').textContent = ''; draw(false); }
+    else if (d.at >= lastAt) { lastAt = d.at; D = d; mergePushed(); document.getElementById('msg').textContent = ''; draw(false); }
   } catch (e) { document.getElementById('msg').textContent = 'Connection problem, retrying'; }
   inflight--;
+}
+
+// Push: Firebase Realtime Database stream (aggregates only). Newer data wins per slide.
+const PUSHED = {};
+function mergePushed() {
+  if (!D) return;
+  D.slides = D.slides.map(s => (PUSHED[s.formId] && PUSHED[s.formId].at > (s.at || 0)) ? Object.assign({}, s, PUSHED[s.formId]) : s);
+}
+function listen() {
+  const fb = window.BOARD_CONFIG && window.BOARD_CONFIG.firebase;
+  if (!fb) return false;
+  const es = new EventSource(fb.replace(/\/$/, '') + '/boards/' + KEY + '/' + COURSE + '/w' + WEEK + '.json');
+  const onData = ev => {
+    const m = JSON.parse(ev.data);
+    if (m.path === '/') Object.assign(PUSHED, m.data || {});
+    else PUSHED[m.path.slice(1).split('/')[0]] = m.data;
+    mergePushed(); draw(false);
+  };
+  es.addEventListener('put', onData);
+  es.addEventListener('patch', onData);
+  return true;
 }
 
 async function themeTick() {
@@ -150,7 +171,7 @@ document.addEventListener('keydown', e => {
 });
 window.addEventListener('resize', () => draw(true));
 if (!API || !KEY) document.getElementById('q').textContent = 'Board link is missing its key.';
-else { tick(); setInterval(tick, 500); themeTick(); }
+else { tick(); setInterval(tick, listen() ? 3000 : 500); themeTick(); }
 </script>
 </body>
 </html>

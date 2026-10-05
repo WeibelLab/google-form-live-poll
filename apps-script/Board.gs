@@ -102,41 +102,45 @@ function weekData_(root, week) {
   const ck = 'data:' + root + ':' + week;
   const hit = cache.get(ck);
   if (hit) return JSON.parse(hit);
-  const slides = weekForms_(root, week).map(function (f) {
-    const ans = answers_(FormApp.openById(f.id), f.itemId);
-    let items;
-    if (f.kind === 'bars') {
-      const c = {};
-      ans.forEach(function (a) { c[a] = (c[a] || 0) + 1; });
-      items = f.choices.map(function (o) { return [o, c[o] || 0]; });
-      Object.keys(c).forEach(function (o) { if (f.choices.indexOf(o) < 0) items.push([o, c[o]]); });
-    } else if (f.kind === 'long') {
-      const c = {};
-      ans.forEach(function (a) {
-        (a.toLowerCase().match(/[a-z][a-z\-']+/g) || []).forEach(function (w) {
-          if (w.length > 2 && STOP_.indexOf(w) < 0) c[w] = (c[w] || 0) + 1;
-        });
-      });
-      items = Object.keys(c).map(function (w) { return [w, c[w]]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 80);
-    } else {
-      const c = {}, shown = {};
-      ans.forEach(function (a) {
-        const k = norm_(a);
-        if (!k) return;
-        c[k] = (c[k] || 0) + 1;
-        shown[k] = shown[k] || {};
-        shown[k][a] = (shown[k][a] || 0) + 1;
-      });
-      items = Object.keys(c).map(function (k) {
-        const best = Object.keys(shown[k]).sort(function (x, y) { return shown[k][y] - shown[k][x]; })[0];
-        return [best, c[k]];
-      }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 150);
-    }
-    return { formId: f.id, title: f.title, kind: f.kind, url: f.url, n: ans.length, items: items };
-  });
+  const slides = weekForms_(root, week).map(aggregateForm_);
   const out = { week: week, at: Date.now(), slides: slides };
   cache.put(ck, JSON.stringify(out), 1);
   return out;
+}
+
+// Aggregate one form (f from weekForms_). Counts and words only, never emails.
+function aggregateForm_(f) {
+  const at = Date.now();
+  const ans = answers_(FormApp.openById(f.id), f.itemId);
+  let items;
+  if (f.kind === 'bars') {
+    const c = {};
+    ans.forEach(function (a) { c[a] = (c[a] || 0) + 1; });
+    items = f.choices.map(function (o) { return [o, c[o] || 0]; });
+    Object.keys(c).forEach(function (o) { if (f.choices.indexOf(o) < 0) items.push([o, c[o]]); });
+  } else if (f.kind === 'long') {
+    const c = {};
+    ans.forEach(function (a) {
+      (a.toLowerCase().match(/[a-z][a-z\-']+/g) || []).forEach(function (w) {
+        if (w.length > 2 && STOP_.indexOf(w) < 0) c[w] = (c[w] || 0) + 1;
+      });
+    });
+    items = Object.keys(c).map(function (w) { return [w, c[w]]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 80);
+  } else {
+    const c = {}, shown = {};
+    ans.forEach(function (a) {
+      const k = norm_(a);
+      if (!k) return;
+      c[k] = (c[k] || 0) + 1;
+      shown[k] = shown[k] || {};
+      shown[k][a] = (shown[k][a] || 0) + 1;
+    });
+    items = Object.keys(c).map(function (k) {
+      const best = Object.keys(shown[k]).sort(function (x, y) { return shown[k][y] - shown[k][x]; })[0];
+      return [best, c[k]];
+    }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 150);
+  }
+  return { formId: f.id, title: f.title, kind: f.kind, url: f.url, n: ans.length, items: items, at: at };
 }
 
 // Themes for a long-text form. Recomputed only when the answer count changed.
