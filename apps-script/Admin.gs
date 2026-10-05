@@ -105,6 +105,7 @@ function adminAddQuestion(slug, week, q) {
   const cur = adminWeek(slug, week).questions;
   const n = cur.reduce(function (m, x) { return Math.max(m, x.n || 0); }, 0) + 1;
   setQuestion_(c, Number(week), n, specFromUi_(q));
+  try { syncTriggers(); } catch (e) { /* live updates fall back to 3 s polling until 6 am */ }
   return adminWeek(slug, week);
 }
 
