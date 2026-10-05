@@ -58,35 +58,56 @@ function weekForms_(root, week) {
     out.push({ id: f.getId(), name: f.getName() });
   }
   out.sort(function (a, b) { return a.name < b.name ? -1 : 1; });
-  const forms = out.map(function (f) {
-    const form = FormApp.openById(f.id);
-    const item = form.getItems().filter(function (it) {
-      const t = it.getType();
-      return t === FormApp.ItemType.MULTIPLE_CHOICE || t === FormApp.ItemType.TEXT ||
-        t === FormApp.ItemType.PARAGRAPH_TEXT || t === FormApp.ItemType.CHECKBOX || t === FormApp.ItemType.LIST;
-    })[0];
-    if (!item) return null;
-    const t = item.getType();
-    let kind = 'cloud', choices = [];
-    if (t === FormApp.ItemType.PARAGRAPH_TEXT) kind = 'long';
-    if (t === FormApp.ItemType.MULTIPLE_CHOICE) { kind = 'bars'; choices = item.asMultipleChoiceItem().getChoices().map(function (c) { return c.getValue(); }); }
-    if (t === FormApp.ItemType.CHECKBOX) { kind = 'bars'; choices = item.asCheckboxItem().getChoices().map(function (c) { return c.getValue(); }); }
-    if (t === FormApp.ItemType.LIST) { kind = 'bars'; choices = item.asListItem().getChoices().map(function (c) { return c.getValue(); }); }
-    return { id: f.id, itemId: item.getId(), title: item.getTitle(), kind: kind, choices: choices, url: form.getPublishedUrl() };
-  }).filter(Boolean);
+  const forms = out.map(function (f) { return describeForm_(f.id); }).filter(Boolean);
   cache.put(ck, JSON.stringify(forms), 30);
   return forms;
 }
 
-function answers_(form, itemId) {
+// Supported question types and how the board shows them.
+const T_ = FormApp.ItemType;
+const KINDS_ = [T_.MULTIPLE_CHOICE, T_.CHECKBOX, T_.LIST, T_.TEXT, T_.PARAGRAPH_TEXT, T_.SCALE, T_.RATING, T_.GRID];
+
+function describeForm_(id) {
+  const form = FormApp.openById(id);
+  const item = form.getItems().filter(function (it) { return KINDS_.indexOf(it.getType()) >= 0; })[0];
+  if (!item) return null;
+  const t = item.getType();
+  const d = { id: id, itemId: item.getId(), title: item.getTitle(), kind: 'cloud', choices: [], url: form.getPublishedUrl() };
+  const vals = function (cs) { return cs.map(function (c) { return c.getValue(); }); };
+  if (t === T_.PARAGRAPH_TEXT) d.kind = 'long';
+  else if (t === T_.MULTIPLE_CHOICE) { d.kind = 'bars'; d.choices = vals(item.asMultipleChoiceItem().getChoices()); }
+  else if (t === T_.LIST) { d.kind = 'bars'; d.choices = vals(item.asListItem().getChoices()); }
+  else if (t === T_.CHECKBOX) { d.kind = 'bars'; d.multi = true; d.choices = vals(item.asCheckboxItem().getChoices()); }
+  else if (t === T_.SCALE) {
+    const sc = item.asScaleItem();
+    d.kind = 'scale'; d.lo = sc.getLowerBound(); d.hi = sc.getUpperBound();
+    d.loLabel = sc.getLeftLabel() || ''; d.hiLabel = sc.getRightLabel() || '';
+  } else if (t === T_.RATING) {
+    const r = item.asRatingItem();
+    d.kind = 'scale'; d.lo = 1; d.hi = r.getRatingScaleLevel(); d.loLabel = ''; d.hiLabel = ''; d.rating = true;
+  } else if (t === T_.GRID) {
+    const g = item.asGridItem();
+    d.kind = 'grid'; d.rows = g.getRows(); d.cols = g.getColumns();
+  }
+  return d;
+}
+
+// One raw response per respondent for the item (string, string[] or grid array).
+function raw_(form, itemId) {
   const out = [];
   form.getResponses().forEach(function (r) {
     r.getItemResponses().forEach(function (ir) {
-      if (ir.getItem().getId() !== itemId) return;
-      const v = ir.getResponse();
-      if (Array.isArray(v)) v.forEach(function (x) { if (x) out.push(String(x)); });
-      else if (v) out.push(String(v).trim());
+      if (ir.getItem().getId() === itemId) out.push(ir.getResponse());
     });
+  });
+  return out;
+}
+
+function answers_(form, itemId) {
+  const out = [];
+  raw_(form, itemId).forEach(function (v) {
+    if (Array.isArray(v)) v.forEach(function (x) { if (x) out.push(String(x)); });
+    else if (v) out.push(String(v).trim());
   });
   return out;
 }
@@ -112,15 +133,38 @@ function weekData_(root, week) {
 function aggregateForm_(f) {
   const at = Date.now();
   const form = FormApp.openById(f.id);
-  const ans = answers_(form, f.itemId);
   const rs = form.getResponses();
   const last = rs.length ? rs[rs.length - 1].getTimestamp().getTime() : 0;
-  let items;
+  const raw = raw_(form, f.itemId);
+  const out = { formId: f.id, title: f.title, kind: f.kind, url: f.url, n: raw.length, at: at, last: last };
+  const ans = [];
+  raw.forEach(function (v) {
+    if (Array.isArray(v)) v.forEach(function (x) { if (x) ans.push(String(x)); });
+    else if (v) ans.push(String(v).trim());
+  });
   if (f.kind === 'bars') {
     const c = {};
     ans.forEach(function (a) { c[a] = (c[a] || 0) + 1; });
-    items = f.choices.map(function (o) { return [o, c[o] || 0]; });
-    Object.keys(c).forEach(function (o) { if (f.choices.indexOf(o) < 0) items.push([o, c[o]]); });
+    out.items = f.choices.map(function (o) { return [o, c[o] || 0]; });
+    Object.keys(c).forEach(function (o) { if (f.choices.indexOf(o) < 0) out.items.push([o, c[o]]); });
+    out.multi = !!f.multi;
+  } else if (f.kind === 'scale') {
+    const c = {}; let sum = 0;
+    ans.forEach(function (a) { const v = Number(a); if (!isNaN(v)) { c[v] = (c[v] || 0) + 1; sum += v; } });
+    out.items = [];
+    for (let v = f.lo; v <= f.hi; v++) out.items.push([String(v), c[v] || 0]);
+    out.avg = ans.length ? Math.round(10 * sum / ans.length) / 10 : null;
+    out.lo = f.lo; out.hi = f.hi; out.loLabel = f.loLabel; out.hiLabel = f.hiLabel; out.rating = !!f.rating;
+  } else if (f.kind === 'grid') {
+    out.rows = f.rows; out.cols = f.cols;
+    out.counts = f.rows.map(function () { return f.cols.map(function () { return 0; }); });
+    raw.forEach(function (v) {
+      (v || []).forEach(function (cell, ri) {
+        const ci = f.cols.indexOf(cell);
+        if (ri < f.rows.length && ci >= 0) out.counts[ri][ci]++;
+      });
+    });
+    out.items = [];
   } else if (f.kind === 'long') {
     const c = {};
     ans.forEach(function (a) {
@@ -128,7 +172,7 @@ function aggregateForm_(f) {
         if (w.length > 2 && STOP_.indexOf(w) < 0) c[w] = (c[w] || 0) + 1;
       });
     });
-    items = Object.keys(c).map(function (w) { return [w, c[w]]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 80);
+    out.items = Object.keys(c).map(function (w) { return [w, c[w]]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 80);
   } else {
     const c = {}, shown = {};
     ans.forEach(function (a) {
@@ -138,12 +182,12 @@ function aggregateForm_(f) {
       shown[k] = shown[k] || {};
       shown[k][a] = (shown[k][a] || 0) + 1;
     });
-    items = Object.keys(c).map(function (k) {
+    out.items = Object.keys(c).map(function (k) {
       const best = Object.keys(shown[k]).sort(function (x, y) { return shown[k][y] - shown[k][x]; })[0];
       return [best, c[k]];
     }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 150);
   }
-  return { formId: f.id, title: f.title, kind: f.kind, url: f.url, n: ans.length, items: items, at: at, last: last };
+  return out;
 }
 
 // Themes for a long-text form. Recomputed only when the answer count changed.

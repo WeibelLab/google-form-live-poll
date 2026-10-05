@@ -26,6 +26,14 @@ main{display:flex;gap:20px;padding:20px 24px;height:calc(100vh - 74px)}
 .bar .trk{flex:1;background:var(--track);border-radius:8px;height:42px;overflow:hidden}
 .bar .fill{height:100%;background:var(--navy);border-radius:8px;transition:width .5s}
 .bar .pct{width:120px;text-align:right;font-weight:700}
+.avg{font-size:clamp(18px,1.8vw,26px);color:var(--navy);margin:6px 0 4px;font-weight:700}
+.ends{display:flex;justify-content:space-between;font-size:15px;color:var(--muted);margin:2px 0 8px}
+.grow{display:flex;align-items:center;margin:12px 0;font-size:clamp(15px,1.5vw,20px)}
+.grow .lab{width:28%;padding-right:12px}
+.grow .stk{flex:1;display:flex;height:40px;border-radius:8px;overflow:hidden;background:var(--track)}
+.grow .seg{height:100%;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;transition:width .5s;white-space:nowrap;overflow:hidden}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:15px;margin:6px 0 4px}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:6px;vertical-align:-2px}
 .theme{margin:12px 0}
 .theme .head{display:flex;align-items:center;gap:12px;font-size:clamp(16px,1.6vw,22px);font-weight:700;color:var(--navy)}
 .theme .trk{flex:1;background:var(--track);border-radius:8px;height:30px;overflow:hidden}
@@ -82,7 +90,7 @@ function draw(force) {
   cur = Math.max(0, Math.min(cur, D.slides.length - 1));
   const s = D.slides[cur], th = TH[s.formId];
   const showThemes = s.kind === 'long' && view === 'themes' && th && th.themes && th.themes.length;
-  const key = JSON.stringify([cur, s.items, showThemes ? th : 0, view]);
+  const key = JSON.stringify([cur, s.items, s.counts, s.avg, showThemes ? th : 0, view]);
   document.getElementById('count').textContent = s.n + ' response' + (s.n === 1 ? '' : 's');
   document.getElementById('q').textContent = s.title;
   document.getElementById('sub').textContent = `Question ${cur + 1} of ${D.slides.length}` +
@@ -92,12 +100,26 @@ function draw(force) {
   if (key === last && !force) return;
   last = key;
   const v = document.getElementById('viz'); v.innerHTML = '';
-  if (s.kind === 'bars') {
-    const tot = s.items.reduce((a, x) => a + x[1], 0) || 1;
+  if (s.kind === 'bars' || s.kind === 'scale') {
+    // Checkboxes: % of students who picked the option, not % of all ticks.
+    const tot = (s.multi ? s.n : s.items.reduce((a, x) => a + x[1], 0)) || 1;
+    if (s.kind === 'scale') {
+      v.insertAdjacentHTML('beforeend', `<div class="avg">${s.avg == null ? 'No answers yet' : 'Average ' + s.avg + ' / ' + s.hi}</div>` +
+        ((s.loLabel || s.hiLabel) ? `<div class="ends"><span>${s.lo} = ${esc(s.loLabel)}</span><span>${s.hi} = ${esc(s.hiLabel)}</span></div>` : ''));
+    }
     for (const [o, k] of s.items) {
       const p = Math.round(100 * k / tot);
-      v.insertAdjacentHTML('beforeend', `<div class="bar"><div class="lab">${esc(o)}</div><div class="trk"><div class="fill" style="width:${p}%"></div></div><div class="pct">${p}% (${k})</div></div>`);
+      const lab = s.kind === 'scale' ? (s.rating ? '★'.repeat(+o) : o) : o;
+      v.insertAdjacentHTML('beforeend', `<div class="bar"><div class="lab">${esc(lab)}</div><div class="trk"><div class="fill" style="width:${p}%"></div></div><div class="pct">${p}% (${k})</div></div>`);
     }
+  } else if (s.kind === 'grid') {
+    const gp = ['#13305a', '#1f6f8b', '#9fb3c8', '#deb160', '#c48f2c', '#b23a48', '#7a3e9d'];
+    v.insertAdjacentHTML('beforeend', '<div class="legend">' + s.cols.map((c, i) => `<span><i style="background:${gp[i % gp.length]}"></i>${esc(c)}</span>`).join('') + '</div>');
+    s.rows.forEach((r, ri) => {
+      const cs = s.counts[ri], tot = cs.reduce((a, b) => a + b, 0) || 1;
+      const segs = cs.map((k, ci) => k ? `<div class="seg" style="width:${100 * k / tot}%;background:${gp[ci % gp.length]}">${Math.round(100 * k / tot)}%</div>` : '').join('');
+      v.insertAdjacentHTML('beforeend', `<div class="grow"><div class="lab">${esc(r)}</div><div class="stk">${segs}</div></div>`);
+    });
   } else if (showThemes) {
     const max = Math.max(1, ...th.themes.map(t => t.count));
     for (const t of th.themes) {

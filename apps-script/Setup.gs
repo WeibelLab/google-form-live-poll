@@ -162,3 +162,98 @@ function writeManifest_(manifest) {
   if (it.hasNext()) it.next().setContent(body);
   else folder.createFile('manifest.json', body, 'application/json');
 }
+
+/**
+ * Weekly questions (from the discussion slides, reframed for live polls on
+ * 2026-10-05). Types: choices (multiple choice), short (word cloud),
+ * long (paragraph, Claude themes), scale [lo, hi, leftLabel, rightLabel], grid {rows, cols}.
+ */
+const AGREE = [1, 5, 'Strongly disagree', 'Strongly agree'];
+const WEEK_QUESTIONS = {
+  3: [
+    { q: 'How can users be integrated into the bias mitigation process?' },
+    { q: 'How helpful would each governance structure be for bias mitigation?',
+      grid: { rows: ['Internal ethics board', 'Independent external audit', 'Government regulation', 'User or community advisory panel', 'Open public scrutiny'],
+              cols: ['Not helpful', 'Somewhat helpful', 'Very helpful'] } },
+    { q: 'Should creatives adapt and reskill to work alongside AI systems?',
+      choices: ["Yes, it's necessary", 'Yes, with consent and pay protections', 'Only if they choose to', 'No, limit AI use instead'] },
+  ],
+  4: [
+    { q: "In one word: a problem you've experienced that AI could help with", short: true },
+    { q: 'Which pitfall is most likely to sink an AI solution?',
+      choices: ['Biased or missing data', 'Solves the wrong problem', "Users don't trust it", 'Privacy risk', 'Too costly to maintain'] },
+    { q: 'What question should you ask before deciding a problem needs AI?' },
+  ],
+  5: [
+    { q: 'At which automation level does responsibility shift most from the driver to the system?',
+      choices: ['Level 1-2 (driver assistance)', 'Level 3 (conditional)', 'Level 4 (high)', 'Level 5 (full)'] },
+    { q: 'Which concern grows most as driving automation increases?',
+      choices: ['Safety', 'Accountability', 'Privacy', 'Fairness', 'Transparency'] },
+    { q: 'Which always-on consideration changes most as cars become more autonomous, and why?' },
+  ],
+  6: [
+    { q: 'Observing users for needfinding on dating apps is...',
+      choices: ['Fine with consent', 'Fine only with anonymized data', 'Too invasive in most cases', 'Never acceptable'] },
+    { q: 'In one word: a daily interaction that matters to you', short: true },
+    { q: 'How would you resolve a gap between what you find meaningful and what a user finds meaningful?' },
+  ],
+  7: [
+    { q: 'Many false positives are an acceptable price for avoiding a single false negative in TSA screening.', scale: AGREE },
+    { q: 'Who should set the acceptable false positive rate?',
+      choices: ['TSA / government', 'Engineers who build the system', 'Travelers and the public', 'An independent oversight body'] },
+    { q: 'What would make false positives less harmful to travelers?' },
+  ],
+  8: [
+    { q: 'For the North-America-only plant dataset, what is cheaper?',
+      choices: ['Diverse data from the start', 'Fixing it after launch', 'About the same', 'Depends on the harm caused'] },
+    { q: 'The benefits of tracking employee demographic data outweigh the risks.', scale: AGREE },
+    { q: 'What risk of collecting demographic data worries you most?' },
+  ],
+  9: [
+    { q: 'In one word: an attribute missing from the protected list', short: true },
+    { q: 'To correct a biased model, what would you change first?',
+      choices: ['Collect more representative data', 'Reweight or resample the data', 'Use a different fairness metric', 'Adjust decision thresholds', 'Remove sensitive features'] },
+    { q: 'What surprised you when exploring word embeddings in WebVectors?' },
+  ],
+  10: [
+    { q: "Was Facebook's emotional contagion experiment ethical?", choices: ['Yes', 'No', 'Legal but not ethical', 'Not sure'] },
+    { q: 'Should users be told about studies beforehand, even if the results are less accurate?',
+      choices: ['Always', 'Only after the study', 'Only for higher-risk studies', 'No'] },
+    { q: 'What is missing from the 2023 AI executive order?' },
+  ],
+};
+
+function addItem_(form, spec) {
+  if (spec.choices) form.addMultipleChoiceItem().setTitle(spec.q).setChoiceValues(spec.choices).setRequired(true);
+  else if (spec.scale) form.addScaleItem().setTitle(spec.q).setBounds(spec.scale[0], spec.scale[1]).setLabels(spec.scale[2], spec.scale[3]).setRequired(true);
+  else if (spec.grid) form.addGridItem().setTitle(spec.q).setRows(spec.grid.rows).setColumns(spec.grid.cols).setRequired(true);
+  else if (spec.short) form.addTextItem().setTitle(spec.q).setRequired(true);
+  else form.addParagraphTextItem().setTitle(spec.q).setRequired(true);
+}
+
+// Rewrite the question of each form WNN Qn in weeks 3-10. Skips forms that already have responses.
+function applyWeekQuestions() {
+  const log = [];
+  Object.keys(WEEK_QUESTIONS).forEach(function (w) {
+    const folder = DriveApp.getFolderById(COURSE.weeks[w]);
+    const ww = ('0' + w).slice(-2);
+    WEEK_QUESTIONS[w].forEach(function (spec, i) {
+      const prefix = 'W' + ww + ' Q' + (i + 1) + ' - ';
+      const files = folder.getFilesByType(MimeType.GOOGLE_FORMS);
+      let file = null;
+      while (files.hasNext()) { const f = files.next(); if (f.getName().indexOf(prefix) === 0) { file = f; break; } }
+      if (!file) { log.push(prefix + 'missing'); return; }
+      const form = FormApp.openById(file.getId());
+      if (form.getResponses().length) { log.push(prefix + 'has responses, skipped'); return; }
+      form.getItems().forEach(function (it) { form.deleteItem(it); });
+      addItem_(form, spec);
+      form.setTitle(spec.q);
+      file.setName(prefix + spec.q);
+      const sid = form.getDestinationId();
+      if (sid) DriveApp.getFileById(sid).setName(prefix + spec.q + ' (responses)');
+      log.push(prefix + 'ok');
+    });
+  });
+  CacheService.getScriptCache().removeAll(Object.keys(COURSE.weeks).map(function (w) { return 'forms:' + COURSE.folderId + ':' + w; }));
+  Logger.log(log.join('\n'));
+}
