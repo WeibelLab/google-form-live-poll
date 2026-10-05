@@ -1,129 +1,115 @@
 /**
- * Google Form Live Poll: course setup.
- * Creates one Google Form per question inside a week folder, with:
- * verified UCSD email, one response per person, sign-in required,
- * responders restricted to ucsd.edu, and a linked response Sheet.
- * Every form is a copy of a styled master form (Forms themes cannot be set by
- * script, but copies keep the theme). Run createStyleMaster once, style it, then
- * run setupAllWeeks.
- * Idempotent: a form whose file name already exists in the folder is skipped.
- * Writes manifest.json (IDs and responder URLs, no responses) to the course folder.
+ * Google Form Live Poll: courses and forms.
+ *
+ * A course is one Google Drive folder (shared with the teaching team) with one
+ * subfolder per week named "Week NN (YYYY-MM-DD)". Each Google Form in a week
+ * folder is one poll question. Courses are listed in the script property
+ * COURSES (managed by the admin page); CSE 291A Fall 2026 is the first entry.
+ *
+ * Every form is a copy of the course's styled master form (Forms themes cannot
+ * be set by script, but copies keep the theme), with verified email, one
+ * response per person, sign-in required, responders limited to the course
+ * domain, and a linked response Sheet.
  */
 
-const COURSE = {
-  name: 'CSE 291A',
-  folderId: '1hJejev5nmwiLTBaip6lp0uW7peNlXoIR', // Discussion Polls
-  domain: 'ucsd.edu',
-  weeks: {
-    1: '1vONiapz314qphNss006gpKruJP6GSYR9',
-    2: '10tt7a9aCyDlAlw3f1j2sEHUg880VylaQ',
-    3: '1_Y6S-6pvk1gnZ1Ew21xgg-R92t1lDW8C',
-    4: '1njOQJszHv8lWM5Bo3Nc51gu0Adkzv1x-',
-    5: '1Vb3h-WeBVcd_aG4Ppu6VIjALg0CPj_Rd',
-    6: '1GI0XGLPk-SB6FLSOCX4O2Q4GesLwzBSO',
-    7: '166oulGwC8fNpY2mhnZD6YlNlX526cTr5',
-    8: '1gQoYxO_UklLUaO1pYRXOSmswdsfHeQ7I',
-    9: '1HRxKNbnSO0jxWXZ92w0UcwjDQom4Voz1',
-    10: '1iaB9jt-JsjU0T5yTJH07zNrGpile5Ds6',
-  },
-};
-
-const QUESTIONS = {
-  1: [
-    { q: "What's your program?", choices: ['Grad: CSE MS', 'Grad: CSE PhD', 'Grad: DSC', 'Grad: other program', 'Undergrad'] },
-    { q: "One word for why you're taking this class", short: true },
-    { q: 'An AI tool you use every day', short: true },
-  ],
-  2: [
-    { q: "Now that we've seen some potential harms, what are the benefits of open sourcing a model?" },
-    { q: 'Do you believe the pros outweigh the cons?', choices: ['Yes', 'No', 'It depends'] },
-    { q: 'When should a model be open sourced?', choices: ['Always', 'After independent safety testing', 'Only for low-risk uses', 'Only to vetted researchers', 'Never'] },
-  ],
-};
-
-// Weeks without listed questions get this template.
-const TEMPLATE = [
-  { q: 'Question 1 (edit me)', choices: ['Choice A', 'Choice B', 'Choice C'] },
-  { q: 'Question 2 (edit me)', short: true },
-  { q: 'Question 3 (edit me)', short: true },
-];
-
 const MASTER_NAME = '_Style master (do not delete)';
+const SEED_COURSE = {
+  slug: 'cse291a', title: 'CSE 291A: Human-Centered AI', name: 'CSE 291A',
+  folderId: '1hJejev5nmwiLTBaip6lp0uW7peNlXoIR', start: '2026-09-29', weeks: 10, domain: 'ucsd.edu',
+};
+// Master form used as the style source for new courses (CSE 291A's).
+const DEFAULT_MASTER_ID = '1d9aln0ApnGtvZZf8WYFwMrl7y2nYinL2sopTGWPGXGE';
 
-function createStyleMaster() {
-  const root = DriveApp.getFolderById(COURSE.folderId);
-  const it = root.getFilesByName(MASTER_NAME);
-  let form;
-  if (it.hasNext()) {
-    form = FormApp.openById(it.next().getId());
-  } else {
-    form = FormApp.create(MASTER_NAME);
-    form.setTitle('Sample question');
-    form.addMultipleChoiceItem().setTitle('Sample question').setChoiceValues(['Choice A', 'Choice B']);
-    form.setAcceptingResponses(false);
-    DriveApp.getFileById(form.getId()).moveTo(root);
-  }
-  Logger.log('Style this form, then run setupAllWeeks: ' + form.getEditUrl());
-  return form.getEditUrl();
+// ---------- Course list ----------
+
+function getCourses_() {
+  const raw = PropertiesService.getScriptProperties().getProperty('COURSES');
+  let list = null;
+  try { list = raw ? JSON.parse(raw) : null; } catch (e) { list = null; }
+  // Older format {slug: folderId} or nothing: start from the seed course.
+  if (!Array.isArray(list)) list = [SEED_COURSE];
+  return list;
 }
 
-function getMaster_() {
-  const it = DriveApp.getFolderById(COURSE.folderId).getFilesByName(MASTER_NAME);
-  if (!it.hasNext()) throw new Error('Run createStyleMaster first.');
+function saveCourses_(list) {
+  PropertiesService.getScriptProperties().setProperty('COURSES', JSON.stringify(list));
+}
+
+function course_(slug) {
+  const c = getCourses_().filter(function (x) { return x.slug === slug; })[0];
+  if (!c) throw new Error('unknown course ' + slug);
+  return c;
+}
+
+function courseByFolder_(folderId) {
+  return getCourses_().filter(function (x) { return x.folderId === folderId; })[0] || null;
+}
+
+function weekDate_(c, week) {
+  const d = new Date(c.start + 'T12:00:00');
+  d.setDate(d.getDate() + 7 * (week - 1));
+  return Utilities.formatDate(d, 'America/Los_Angeles', 'yyyy-MM-dd');
+}
+
+function weekFolder_(c, week, create) {
+  const prefix = 'Week ' + ('0' + week).slice(-2);
+  const root = DriveApp.getFolderById(c.folderId);
+  const it = root.getFolders();
+  while (it.hasNext()) { const f = it.next(); if (f.getName().indexOf(prefix) === 0) return f; }
+  if (!create) throw new Error('no folder for week ' + week);
+  return root.createFolder(prefix + ' (' + weekDate_(c, week) + ')');
+}
+
+// ---------- Style master ----------
+
+function getMaster_(c) {
+  const it = DriveApp.getFolderById(c.folderId).getFilesByName(MASTER_NAME);
+  if (!it.hasNext()) throw new Error('No style master in the course folder.');
   return it.next();
 }
 
-function setupAllWeeks() {
-  getMaster_();
-  const manifest = { course: COURSE.name, folderId: COURSE.folderId, weeks: {} };
-  Object.keys(COURSE.weeks).forEach(function (w) {
-    const qs = QUESTIONS[w] || TEMPLATE;
-    manifest.weeks[w] = qs.map(function (spec, i) {
-      return ensureForm_(Number(w), i + 1, spec);
-    });
-  });
-  writeManifest_(manifest);
-  Logger.log(JSON.stringify(manifest, null, 1));
+// New course: copy the default master (keeps its theme) into the course folder.
+function ensureMaster_(c) {
+  const root = DriveApp.getFolderById(c.folderId);
+  const it = root.getFilesByName(MASTER_NAME);
+  if (it.hasNext()) return it.next();
+  return DriveApp.getFileById(DEFAULT_MASTER_ID).makeCopy(MASTER_NAME, root);
 }
 
-function ensureForm_(week, n, spec) {
-  const folder = DriveApp.getFolderById(COURSE.weeks[week]);
-  const ww = ('0' + week).slice(-2);
-  const fileName = 'W' + ww + ' Q' + n + ' - ' + spec.q;
-  const existing = folder.getFilesByName(fileName);
+// ---------- Forms ----------
+
+function formFile_(c, week, n) {
+  const prefix = 'W' + ('0' + week).slice(-2) + ' Q' + n + ' - ';
+  const files = weekFolder_(c, week).getFilesByType(MimeType.GOOGLE_FORMS);
+  while (files.hasNext()) { const f = files.next(); if (f.getName().indexOf(prefix) === 0) return f; }
+  return null;
+}
+
+// Create the form for question n of a week if missing (copy of the master, settings, response Sheet).
+function ensureForm_(c, week, n, spec) {
+  const folder = weekFolder_(c, week, true);
+  const existing = formFile_(c, week, n);
   let form;
-  if (existing.hasNext()) {
-    form = FormApp.openById(existing.next().getId());
+  if (existing) {
+    form = FormApp.openById(existing.getId());
   } else {
-    form = FormApp.openById(getMaster_().makeCopy(fileName, folder).getId());
+    const fileName = 'W' + ('0' + week).slice(-2) + ' Q' + n + ' - ' + spec.q;
+    form = FormApp.openById(getMaster_(c).makeCopy(fileName, folder).getId());
     form.getItems().forEach(function (it) { form.deleteItem(it); });
+    addItem_(form, spec);
     form.setTitle(spec.q);
-    form.setDescription(COURSE.name + ' Week ' + week + ' discussion poll. ' +
-      'Your answer is recorded with your UCSD email for participation credit. ' +
+    form.setDescription((c.name || c.title) + ' Week ' + week + ' discussion poll. ' +
+      'Your answer is recorded with your university email for participation credit. ' +
       'Only aggregated answers are shown in class.');
-    if (spec.choices) {
-      form.addMultipleChoiceItem().setTitle(spec.q).setChoiceValues(spec.choices).setRequired(true);
-    } else if (spec.short) {
-      form.addTextItem().setTitle(spec.q).setRequired(true);
-    } else {
-      form.addParagraphTextItem().setTitle(spec.q).setRequired(true);
-    }
     const ss = SpreadsheetApp.create(fileName + ' (responses)');
     DriveApp.getFileById(ss.getId()).moveTo(folder);
     form.setDestination(FormApp.DestinationType.SPREADSHEET, ss.getId());
   }
-  applySettings_(form);
-  return {
-    n: n,
-    question: spec.q,
-    type: spec.choices ? 'choice' : 'text',
-    formId: form.getId(),
-    url: form.getPublishedUrl(),
-    sheetId: form.getDestinationId(),
-  };
+  applySettings_(form, c.domain);
+  return form;
 }
 
-function applySettings_(form) {
+function applySettings_(form, domain) {
   // Copies start unpublished; response settings need a published form.
   if (form.setPublished && !form.isPublished()) form.setPublished(true);
   form.setEmailCollectionType(FormApp.EmailCollectionType.VERIFIED);
@@ -132,35 +118,47 @@ function applySettings_(form) {
   form.setAllowResponseEdits(false);
   form.setShowLinkToRespondAgain(false);
   form.setAcceptingResponses(true);
-  restrictResponders_(form.getId());
+  restrictResponders_(form.getId(), domain || 'ucsd.edu');
 }
 
-// Responders: ucsd.edu only. Removes any "anyone" access, adds domain published-reader.
-function restrictResponders_(fileId) {
+// Responders: course domain only. Removes any "anyone" access, adds domain published-reader.
+function restrictResponders_(fileId, domain) {
   const base = 'https://www.googleapis.com/drive/v3/files/' + fileId + '/permissions';
   const headers = { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() };
-  const list = JSON.parse(UrlFetchApp.fetch(base + '?fields=permissions(id,type,domain,view)', { headers: headers }).getContentText());
+  const list = JSON.parse(UrlFetchApp.fetch(base + '?fields=permissions(id,type,domain,view)&supportsAllDrives=true', { headers: headers }).getContentText());
   let hasDomain = false;
   (list.permissions || []).forEach(function (p) {
-    if (p.type === 'anyone') {
-      UrlFetchApp.fetch(base + '/' + p.id, { method: 'delete', headers: headers });
-    }
-    if (p.type === 'domain' && p.domain === COURSE.domain && p.view === 'published') hasDomain = true;
+    if (p.type === 'anyone') UrlFetchApp.fetch(base + '/' + p.id + '?supportsAllDrives=true', { method: 'delete', headers: headers });
+    if (p.type === 'domain' && p.domain === domain && p.view === 'published') hasDomain = true;
   });
   if (!hasDomain) {
-    UrlFetchApp.fetch(base, {
+    UrlFetchApp.fetch(base + '?supportsAllDrives=true', {
       method: 'post', headers: headers, contentType: 'application/json',
-      payload: JSON.stringify({ type: 'domain', domain: COURSE.domain, role: 'reader', view: 'published' }),
+      payload: JSON.stringify({ type: 'domain', domain: domain, role: 'reader', view: 'published' }),
     });
   }
 }
 
-function writeManifest_(manifest) {
-  const folder = DriveApp.getFolderById(COURSE.folderId);
-  const it = folder.getFilesByName('manifest.json');
-  const body = JSON.stringify(manifest, null, 1);
-  if (it.hasNext()) it.next().setContent(body);
-  else folder.createFile('manifest.json', body, 'application/json');
+// Set the question of form n in a week (creates the form if missing). Refuses forms with responses.
+function setQuestion_(c, week, n, spec) {
+  const form = ensureForm_(c, week, n, spec);
+  if (form.getResponses().length) throw new Error('W' + week + ' Q' + n + ' already has responses. Delete them first or add a new question.');
+  form.getItems().forEach(function (it) { form.deleteItem(it); });
+  addItem_(form, spec);
+  form.setTitle(spec.q);
+  const prefix = 'W' + ('0' + week).slice(-2) + ' Q' + n + ' - ';
+  DriveApp.getFileById(form.getId()).setName(prefix + spec.q);
+  const sid = form.getDestinationId();
+  if (sid) DriveApp.getFileById(sid).setName(prefix + spec.q + ' (responses)');
+  CacheService.getScriptCache().remove('forms:' + c.folderId + ':' + week);
+  return form;
+}
+
+// Template for a new course: per week, Q1 multiple choice, Q2 short answer, then paragraphs.
+function templateSpec_(n) {
+  if (n === 1) return { q: 'Question 1 (edit me)', choices: ['Choice A', 'Choice B', 'Choice C'], other: true };
+  if (n === 2) return { q: 'Question 2 (edit me)', short: true };
+  return { q: 'Question ' + n + ' (edit me)' };
 }
 
 /**
@@ -247,34 +245,15 @@ function addItem_(form, spec) {
   else form.addParagraphTextItem().setTitle(spec.q).setRequired(true);
 }
 
-// Rewrite the question of each form WNN Qn listed in WEEK_QUESTIONS (creates missing ones). Skips forms that already have responses.
+// CSE 291A: apply WEEK_QUESTIONS (from the slides). Skips forms that already have responses.
 function applyWeekQuestions() {
+  const c = course_('cse291a');
   const log = [];
   Object.keys(WEEK_QUESTIONS).forEach(function (w) {
-    const folder = DriveApp.getFolderById(COURSE.weeks[w]);
-    const ww = ('0' + w).slice(-2);
     WEEK_QUESTIONS[w].forEach(function (spec, i) {
-      const prefix = 'W' + ww + ' Q' + (i + 1) + ' - ';
-      const files = folder.getFilesByType(MimeType.GOOGLE_FORMS);
-      let file = null;
-      while (files.hasNext()) { const f = files.next(); if (f.getName().indexOf(prefix) === 0) { file = f; break; } }
-      if (!file) {
-        ensureForm_(Number(w), i + 1, spec);   // new question: copy the styled master, settings, response Sheet
-        const again = folder.getFilesByType(MimeType.GOOGLE_FORMS);
-        while (again.hasNext()) { const f = again.next(); if (f.getName().indexOf(prefix) === 0) { file = f; break; } }
-        if (!file) { log.push(prefix + 'could not create'); return; }
-      }
-      const form = FormApp.openById(file.getId());
-      if (form.getResponses().length) { log.push(prefix + 'has responses, skipped'); return; }
-      form.getItems().forEach(function (it) { form.deleteItem(it); });
-      addItem_(form, spec);
-      form.setTitle(spec.q);
-      file.setName(prefix + spec.q);
-      const sid = form.getDestinationId();
-      if (sid) DriveApp.getFileById(sid).setName(prefix + spec.q + ' (responses)');
-      log.push(prefix + 'ok');
+      try { setQuestion_(c, Number(w), i + 1, spec); log.push('W' + w + ' Q' + (i + 1) + ' ok'); }
+      catch (e) { log.push('W' + w + ' Q' + (i + 1) + ': ' + e.message); }
     });
   });
-  CacheService.getScriptCache().removeAll(Object.keys(COURSE.weeks).map(function (w) { return 'forms:' + COURSE.folderId + ':' + w; }));
   Logger.log(log.join('\n'));
 }

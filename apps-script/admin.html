@@ -1,0 +1,267 @@
+<!doctype html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+:root{--navy:#13305a;--gold:#deb160;--bg:#f6f7fb;--ink:#1b2433;--muted:#667;--line:#dde3ec;--red:#b23a48}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:15px}
+header{background:var(--navy);color:#fff;padding:12px 20px;border-bottom:5px solid var(--gold);display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+header h1{font-size:20px;margin:0;flex:1}
+header select{font:inherit;padding:6px 8px;border-radius:6px}
+nav{display:flex;gap:4px;padding:10px 20px 0;flex-wrap:wrap}
+nav button{font:inherit;border:1px solid var(--line);border-bottom:none;background:#e9edf4;padding:8px 14px;border-radius:8px 8px 0 0;cursor:pointer}
+nav button.on{background:#fff;font-weight:700;color:var(--navy)}
+main{background:#fff;margin:0 20px 20px;border:1px solid var(--line);border-radius:0 8px 8px 8px;padding:18px 20px}
+h2{font-size:18px;color:var(--navy);margin:4px 0 12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}
+label{font-weight:600}
+input,select,textarea{font:inherit;padding:6px 8px;border:1px solid #c9d1de;border-radius:6px}
+textarea{width:100%;min-height:80px}
+input.wide{width:100%}
+button.act{font:inherit;background:var(--navy);color:#fff;border:none;border-radius:6px;padding:7px 14px;cursor:pointer}
+button.sec{font:inherit;background:#fff;color:var(--navy);border:1px solid var(--navy);border-radius:6px;padding:6px 12px;cursor:pointer}
+button.danger{background:var(--red)}
+button:disabled{opacity:.45;cursor:default}
+.card{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:12px 0}
+.card h3{margin:0 0 8px;font-size:15px}
+.muted{color:var(--muted);font-size:13px}
+.msg{padding:8px 12px;border-radius:6px;margin:10px 0;display:none}
+.msg.ok{display:block;background:#e7f4ea;color:#1d5b2c}
+.msg.err{display:block;background:#fbe9eb;color:var(--red)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#f1f4f9}
+a{color:#1f5fa8}
+.hide{display:none}
+.links li{margin:4px 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>Live Poll Admin</h1>
+  <span>Course <select id="course"></select></span>
+  <span class="muted" style="color:#dde6f0" id="me"></span>
+</header>
+<nav>
+  <button data-tab="questions" class="on">Questions</button>
+  <button data-tab="answers">Answers</button>
+  <button data-tab="links">Board links</button>
+  <button data-tab="new">New course</button>
+  <button data-tab="admins">Admins</button>
+</nav>
+<main>
+  <div id="msg" class="msg"></div>
+
+  <section id="tab-questions">
+    <div class="row"><label>Week</label><select id="qweek"></select>
+      <a id="qboard" target="_blank">Open board</a></div>
+    <div id="qlist"></div>
+    <div class="card"><h3>Add a question to this week</h3><div id="qnew"></div></div>
+  </section>
+
+  <section id="tab-answers" class="hide">
+    <div class="row"><label>Week</label><select id="aweek"></select>
+      <button class="sec" id="aload">Load answers</button>
+      <button class="act danger" id="adel" disabled>Delete selected</button>
+      <button class="sec" id="acredit">Refresh credit Sheet</button></div>
+    <p class="muted">Deleting removes the answer from the Google Form and its response Sheet. The student can then answer again.</p>
+    <div id="alist"></div>
+  </section>
+
+  <section id="tab-links" class="hide">
+    <p class="muted">Open the link for the week on the classroom computer. Staff only: the key at the end of the link unlocks the results.</p>
+    <ul id="links" class="links"></ul>
+    <p><a id="folder" target="_blank">Open the course folder in Google Drive</a></p>
+  </section>
+
+  <section id="tab-new" class="hide">
+    <h2>New course</h2>
+    <p class="muted">First create a folder in a Shared Drive (or a shared folder) for the course, add the teaching team, and give <b id="owner"></b> edit access. Then fill this in.</p>
+    <div class="row"><label>Title</label><input id="n-title" class="wide" placeholder="CSE 291A: Human-Centered AI"></div>
+    <div class="row"><label>Short label on forms</label><input id="n-name" placeholder="CSE 291A"></div>
+    <div class="row"><label>Short name in links</label><input id="n-slug" placeholder="cse291a-wi27"></div>
+    <div class="row"><label>Course folder link</label><input id="n-folder" class="wide" placeholder="https://drive.google.com/drive/folders/..."></div>
+    <div class="row"><label>First class</label><input id="n-start" type="date">
+      <label>Weeks</label><input id="n-weeks" type="number" value="10" min="1" max="20" style="width:70px">
+      <label>Questions per week</label><input id="n-per" type="number" value="3" min="1" max="6" style="width:70px">
+      <label>Email domain</label><input id="n-domain" value="ucsd.edu" style="width:120px"></div>
+    <div class="row"><button class="act" id="n-go">1. Create course folders</button></div>
+    <div id="n-step2" class="card hide"><h3>2. Look of the forms (optional)</h3>
+      <p>All forms are copies of the <a id="n-master" target="_blank">style master</a>. It starts with the CSE 291A look. To change the header image or color, open it, click the palette icon, change it, then come back.</p>
+      <div class="row"><button class="act" id="n-forms">3. Create the forms</button></div></div>
+    <div id="n-progress" class="muted"></div>
+  </section>
+
+  <section id="tab-admins" class="hide">
+    <h2>Admins</h2>
+    <p class="muted">These people can use this page (the owner always can). One email per line.</p>
+    <textarea id="admins"></textarea>
+    <div class="row"><button class="act" id="admins-save">Save</button></div>
+  </section>
+</main>
+
+<script>
+let S = null, slug = null;
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function msg(t, ok) { const m = $('msg'); m.textContent = t; m.className = 'msg ' + (ok ? 'ok' : 'err'); if (ok) setTimeout(() => m.className = 'msg', 5000); }
+function call(fn, ...args) {
+  return new Promise((res, rej) => google.script.run.withSuccessHandler(res).withFailureHandler(e => { msg(e.message || String(e)); rej(e); })[fn](...args));
+}
+const course = () => S.courses.find(c => c.slug === slug);
+
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('main section').forEach(s => s.classList.toggle('hide', s.id !== 'tab-' + b.dataset.tab));
+});
+
+async function load() {
+  S = await call('adminState');
+  $('me').textContent = S.me; $('owner').textContent = S.owner;
+  $('course').innerHTML = S.courses.map(c => `<option value="${esc(c.slug)}">${esc(c.title)}</option>`).join('');
+  if (slug && S.courses.some(c => c.slug === slug)) $('course').value = slug;
+  slug = $('course').value;
+  $('admins').value = S.admins.join('\n');
+  pickCourse();
+}
+$('course').onchange = () => { slug = $('course').value; pickCourse(); };
+
+function pickCourse() {
+  const c = course();
+  const opts = Array.from({ length: c.weeks }, (_, i) => `<option value="${i + 1}">Week ${i + 1}</option>`).join('');
+  $('qweek').innerHTML = opts; $('aweek').innerHTML = opts;
+  $('qweek').value = c.currentWeek; $('aweek').value = c.currentWeek;
+  $('links').innerHTML = c.boardLinks.map((u, i) => `<li>Week ${i + 1}: <a href="${esc(u)}" target="_blank">open board</a> <button class="sec" onclick="navigator.clipboard.writeText('${esc(u)}');msg('Link copied',1)">copy link</button></li>`).join('');
+  $('folder').href = c.folderUrl;
+  $('alist').innerHTML = '';
+  loadWeek();
+}
+
+// ---------- Questions ----------
+const TYPES = [['choice', 'Multiple choice (bars)'], ['checkbox', 'Checkboxes (bars)'], ['short', 'Short answer (word cloud)'],
+               ['long', 'Paragraph (Claude themes)'], ['scale', 'Agree scale 1-5 (bars + average)'], ['grid', 'Grid (stacked bars)']];
+function typeOf(q) {
+  if (q.kind === 'bars') return q.multi ? 'checkbox' : 'choice';
+  if (q.kind === 'cloud') return 'short';
+  return q.kind;
+}
+function editor(id, q, locked) {
+  const t = q ? typeOf(q) : 'choice';
+  return `<div class="row"><input class="wide" id="${id}-title" placeholder="Question" value="${esc(q ? q.title : '')}" ${locked ? 'disabled' : ''}></div>
+  <div class="row"><select id="${id}-type" onchange="showFields('${id}')" ${locked ? 'disabled' : ''}>${TYPES.map(([v, l]) => `<option value="${v}" ${v === t ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+  <div id="${id}-choices" class="f"><label>Choices, one per line</label><textarea id="${id}-c" ${locked ? 'disabled' : ''}>${esc(q && q.choices ? q.choices.join('\n') : '')}</textarea>
+    <div class="row"><label><input type="checkbox" id="${id}-other" ${!q || q.other ? 'checked' : ''} ${locked ? 'disabled' : ''}> Allow "Other"</label>
+    <span id="${id}-maxw"><label>Max picks</label> <input id="${id}-max" type="number" min="0" style="width:60px" placeholder="any" ${locked ? 'disabled' : ''}></span></div></div>
+  <div id="${id}-scale" class="f"><div class="row"><label>1 =</label><input id="${id}-lo" value="${esc(q && q.loLabel || 'Strongly disagree')}" ${locked ? 'disabled' : ''}>
+    <label>${q && q.hi ? q.hi : 5} =</label><input id="${id}-hi" value="${esc(q && q.hiLabel || 'Strongly agree')}" ${locked ? 'disabled' : ''}></div></div>
+  <div id="${id}-grid" class="f"><div class="row" style="align-items:flex-start"><div style="flex:1"><label>Rows</label><textarea id="${id}-rows" ${locked ? 'disabled' : ''}>${esc(q && q.rows ? q.rows.join('\n') : '')}</textarea></div>
+    <div style="flex:1"><label>Columns</label><textarea id="${id}-cols" ${locked ? 'disabled' : ''}>${esc(q && q.cols && q.cols.length ? q.cols.join('\n') : 'Not helpful\nSomewhat helpful\nVery helpful')}</textarea></div></div></div>`;
+}
+function showFields(id) {
+  const t = $(id + '-type').value;
+  $(id + '-choices').style.display = (t === 'choice' || t === 'checkbox') ? '' : 'none';
+  $(id + '-maxw').style.display = t === 'checkbox' ? '' : 'none';
+  $(id + '-scale').style.display = t === 'scale' ? '' : 'none';
+  $(id + '-grid').style.display = t === 'grid' ? '' : 'none';
+}
+function read(id) {
+  const lines = v => v.split('\n').map(x => x.trim()).filter(Boolean);
+  return { title: $(id + '-title').value, type: $(id + '-type').value, choices: lines($(id + '-c').value),
+           other: $(id + '-other').checked, max: $(id + '-max').value, loLabel: $(id + '-lo').value, hiLabel: $(id + '-hi').value,
+           rows: lines($(id + '-rows').value), cols: lines($(id + '-cols').value) };
+}
+async function loadWeek() {
+  const w = $('qweek').value;
+  $('qlist').innerHTML = '<p class="muted">Loading…</p>';
+  const d = await call('adminWeek', slug, Number(w));
+  renderWeek(d);
+}
+function renderWeek(d) {
+  $('qboard').href = d.board;
+  $('qlist').innerHTML = d.questions.map(q => {
+    const id = 'q' + q.n, locked = q.responses > 0;
+    return `<div class="card"><h3>Q${q.n} <span class="muted">· ${q.responses} answer${q.responses === 1 ? '' : 's'} ·
+      <a href="${esc(q.url)}" target="_blank">student form</a> · <a href="${esc(q.editUrl)}" target="_blank">edit in Google Forms</a></span></h3>
+      ${editor(id, q, locked)}
+      <div class="row">${locked ? '<span class="muted">Has answers: delete them on the Answers tab before changing the question.</span>'
+        : `<button class="act" onclick="saveQ(${q.n})">Save</button>`}</div></div>`;
+  }).join('') || '<p class="muted">No questions in this week yet.</p>';
+  d.questions.forEach(q => showFields('q' + q.n));
+  $('qnew').innerHTML = editor('qn', null, false) + '<div class="row"><button class="act" onclick="addQ()">Add question</button></div>';
+  showFields('qn');
+}
+$('qweek').onchange = loadWeek;
+async function saveQ(n) {
+  msg('Saving…', 1);
+  renderWeek(await call('adminSaveQuestion', slug, Number($('qweek').value), n, read('q' + n)));
+  msg('Saved. The board shows the change within 30 seconds.', 1);
+}
+async function addQ() {
+  msg('Creating the form…', 1);
+  renderWeek(await call('adminAddQuestion', slug, Number($('qweek').value), read('qn')));
+  msg('Question added. It appears on the board within 30 seconds.', 1);
+}
+
+// ---------- Answers ----------
+let A = [];
+$('aload').onclick = async () => {
+  $('alist').innerHTML = '<p class="muted">Loading…</p>';
+  A = await call('adminResponses', slug, Number($('aweek').value));
+  $('alist').innerHTML = A.length ? `<table><tr><th></th><th>Q</th><th>Email</th><th>Time</th><th>Answer</th></tr>` +
+    A.map((r, i) => `<tr><td><input type="checkbox" data-i="${i}" onchange="selCount()"></td><td>${r.n}</td><td>${esc(r.email)}</td>
+      <td>${new Date(r.time).toLocaleString()}</td><td>${esc(r.answer)}</td></tr>`).join('') + '</table>'
+    : '<p class="muted">No answers for this week.</p>';
+  selCount();
+};
+function selCount() {
+  const n = document.querySelectorAll('#alist input:checked').length;
+  $('adel').disabled = !n; $('adel').textContent = n ? `Delete ${n} selected` : 'Delete selected';
+}
+$('adel').onclick = async () => {
+  const items = [...document.querySelectorAll('#alist input:checked')].map(x => A[+x.dataset.i]);
+  if (!confirm(`Delete ${items.length} answer${items.length === 1 ? '' : 's'}? This cannot be undone.`)) return;
+  const n = await call('adminDelete', slug, items);
+  msg(`${n} deleted.`, 1);
+  $('aload').onclick();
+};
+$('acredit').onclick = async () => { msg('Refreshing…', 1); const url = await call('adminRefreshCredit', slug); msg('Credit Sheet updated.', 1); window.open(url, '_blank'); };
+$('aweek').onchange = () => { $('alist').innerHTML = ''; selCount(); };
+
+// ---------- New course ----------
+let NEW = null;
+$('n-go').onclick = async () => {
+  const d = { title: $('n-title').value, name: $('n-name').value, slug: $('n-slug').value, folder: $('n-folder').value,
+              start: $('n-start').value, weeks: $('n-weeks').value, domain: $('n-domain').value };
+  $('n-go').disabled = true;
+  try {
+    NEW = await call('adminCreateCourse', d);
+    $('n-master').href = NEW.masterUrl;
+    $('n-step2').classList.remove('hide');
+    $('n-progress').textContent = 'Folders created.';
+  } catch (e) { $('n-go').disabled = false; }
+};
+$('n-forms').onclick = async () => {
+  const per = Number($('n-per').value) || 3;
+  $('n-forms').disabled = true;
+  for (let w = 1; w <= NEW.weeks; w++) {
+    $('n-progress').textContent = `Creating forms: week ${w} of ${NEW.weeks}…`;
+    await call('adminCreateWeekForms', NEW.slug, w, per);
+  }
+  $('n-progress').textContent = 'Turning on live updates…';
+  await call('adminSyncTriggers');
+  $('n-progress').textContent = 'Done. Edit the questions on the Questions tab; board links are on the Board links tab.';
+  slug = NEW.slug; await load();
+};
+
+// ---------- Admins ----------
+$('admins-save').onclick = async () => {
+  const list = await call('adminSetAdmins', $('admins').value.split('\n'));
+  $('admins').value = list.join('\n'); msg('Saved.', 1);
+};
+
+load();
+</script>
+</body>
+</html>

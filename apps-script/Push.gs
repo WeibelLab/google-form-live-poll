@@ -12,7 +12,6 @@
  * current and next week. syncTriggers runs daily at 6 am to move them.
  */
 
-const PUSH_COURSE = 'cse291a';
 const FIREBASE_URL = 'https://form-live-poll-default-rtdb.firebaseio.com';
 
 function fbPut_(path, data) {
@@ -29,19 +28,22 @@ function fbPut_(path, data) {
   if (r.getResponseCode() !== 200) throw new Error('Firebase ' + r.getResponseCode() + ': ' + r.getContentText());
 }
 
-// Week number from the parent folder name "Week NN (...)".
-function weekOfForm_(formId) {
-  const name = DriveApp.getFileById(formId).getParents().next().getName();
-  const m = name.match(/^Week (\d+)/);
-  return m ? Number(m[1]) : null;
+// Course and week of a form, from its folders: course folder / "Week NN (...)" / form.
+function placeOfForm_(formId) {
+  const weekFolder = DriveApp.getFileById(formId).getParents().next();
+  const m = weekFolder.getName().match(/^Week (\d+)/);
+  if (!m) return null;
+  const c = courseByFolder_(weekFolder.getParents().next().getId());
+  return c ? { c: c, week: Number(m[1]) } : null;
 }
 
 function pushForm_(formId) {
-  const week = weekOfForm_(formId);
-  if (!week) return;
-  const f = weekForms_(COURSE.folderId, week).filter(function (x) { return x.id === formId; })[0];
+  const p = placeOfForm_(formId);
+  if (!p) return;
+  CacheService.getScriptCache().remove('data:' + p.c.folderId + ':' + p.week);
+  const f = weekForms_(p.c.folderId, p.week).filter(function (x) { return x.id === formId; })[0];
   if (!f) return;
-  fbPut_(PUSH_COURSE + '/w' + week + '/' + formId, aggregateForm_(f));
+  fbPut_(p.c.slug + '/w' + p.week + '/' + formId, aggregateForm_(f));
 }
 
 // Installable trigger handler.
@@ -49,9 +51,9 @@ function onPollSubmit(e) {
   pushForm_(e.source.getId());
 }
 
-// Current week = latest week folder whose date (in its name) is on or before today.
-function currentWeek_() {
-  const folders = DriveApp.getFolderById(COURSE.folderId).getFolders();
+// Current week of a course = latest week folder whose date is on or before today.
+function currentWeek_(c) {
+  const folders = DriveApp.getFolderById(c.folderId).getFolders();
   const today = Utilities.formatDate(new Date(), 'America/Los_Angeles', 'yyyy-MM-dd');
   let best = 1;
   while (folders.hasNext()) {
@@ -61,17 +63,15 @@ function currentWeek_() {
   return best;
 }
 
-// Submit triggers for the given weeks (default: current and next), daily resync at 6 am.
-function syncTriggers(weeks) {
-  if (!Array.isArray(weeks)) {
-    const w = currentWeek_();
-    weeks = [w, w + 1];
-  }
+// Submit triggers for the current and next week of every course (Google allows 20
+// triggers per script), plus a daily resync at 6 am.
+function syncTriggers() {
   const want = {};
-  weeks.forEach(function (w) {
-    try {
-      weekForms_(COURSE.folderId, w).forEach(function (f) { want[f.id] = w; });
-    } catch (err) { /* week folder missing */ }
+  getCourses_().forEach(function (c) {
+    const w = currentWeek_(c);
+    [w, w + 1].forEach(function (wk) {
+      try { weekForms_(c.folderId, wk).forEach(function (f) { want[f.id] = true; }); } catch (err) { /* no folder */ }
+    });
   });
   const have = {};
   let daily = false;
@@ -83,13 +83,11 @@ function syncTriggers(weeks) {
     }
     if (t.getHandlerFunction() === 'syncTriggers') daily = true;
   });
-  Object.keys(want).forEach(function (id) {
+  const ids = Object.keys(want).slice(0, 17);
+  ids.forEach(function (id) {
     if (!have[id]) ScriptApp.newTrigger('onPollSubmit').forForm(id).onFormSubmit().create();
-    pushForm_(id);
+    try { pushForm_(id); } catch (err) { /* push is best effort */ }
   });
   if (!daily) ScriptApp.newTrigger('syncTriggers').timeBased().everyDays(1).atHour(6).inTimezone('America/Los_Angeles').create();
-  Logger.log('Submit triggers for weeks ' + weeks.join(', ') + ': ' + Object.keys(want).length + ' forms.');
+  Logger.log('Submit triggers: ' + ids.length + ' forms.');
 }
-
-// For testing with Week 1 now.
-function syncWeek1And2() { syncTriggers([1, 2]); }
