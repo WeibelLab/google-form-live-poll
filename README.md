@@ -16,11 +16,12 @@ Live polls for class discussions, built on Google Forms. Students scan a QR code
 4. [For TAs: running a class](#for-tas-running-a-class)
 5. [For TAs: preparing the questions](#for-tas-preparing-the-questions)
 6. [Question types and what the board shows](#question-types-and-what-the-board-shows)
-7. [Participation credit](#participation-credit)
-8. [Setting up a new course](#setting-up-a-new-course)
-9. [Privacy](#privacy)
-10. [Troubleshooting](#troubleshooting)
-11. [Repository layout](#repository-layout)
+7. [Removing answers](#removing-answers-tests-duplicates-inappropriate-text)
+8. [Participation credit](#participation-credit)
+9. [Setting up a new course](#setting-up-a-new-course)
+10. [Privacy](#privacy)
+11. [Troubleshooting](#troubleshooting)
+12. [Repository layout](#repository-layout)
 
 ## How it works
 
@@ -162,6 +163,18 @@ Not used for live polls: Date, Time, File upload, Checkbox grid.
 | ![Bars](docs/img/board-q1.png) | ![Scale](docs/img/board-q3.png) |
 | **Multiple choice grid** | **Paragraph (Claude themes)** |
 | ![Grid](docs/img/board-q4.png) | ![Themes](docs/img/board-q5.png) |
+
+## Removing answers (tests, duplicates, inappropriate text)
+
+The board and the credit export read responses from the **form**, not from the linked Sheet. The Sheet is a copy.
+
+1. Open the form, **Responses**.
+   - One answer: **Individual** tab, find the response, trash icon.
+   - All answers (for example after testing): **⋮**, **Delete all responses**.
+2. Delete the matching rows in the linked response Sheet, so the copy matches. Deleting in one place does not change the other.
+3. The board updates within about 3 seconds. Run `exportCreditAllWeeks` to refresh the credit Sheet right away, or wait for the hourly refresh.
+
+A student whose response was deleted can answer that form again.
 
 ## Participation credit
 
