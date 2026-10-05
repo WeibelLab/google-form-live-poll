@@ -57,6 +57,8 @@ https://script.google.com/a/macros/ucsd.edu/s/AKfycbwQ_D73yvzjz_Gg3jpo7DlhbH8wI4
 | New course | Set up a new class instance: folders, style master, forms, live updates. |
 | Admins | Who can use this page. |
 
+![Admin page, Questions tab](docs/img/admin.png)
+
 **Access.** You must be signed in with a UC San Diego Google account, and be the script owner or listed on the **Admins** tab. Anyone else sees "no access". The page runs with the owner's permissions, so admins don't need to authorize anything or have access to the Apps Script project.
 
 **Code access.** The code is on GitHub (WeibelLab/google-form-live-poll). Changes to the board (`docs/`) go live through GitHub Pages within a minute. The backend (`apps-script/`) runs in the owner's Apps Script project and is updated there by the owner.
