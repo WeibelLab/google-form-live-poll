@@ -1,0 +1,33 @@
+{
+ "title": "CSE 291A \u00b7 Week 2 Discussion",
+ "slides": [
+  {
+   "question": "Now that we've seen some potential harms, what are the benefits of open sourcing a model?",
+   "sheet": "1CNjrb_mYHIrKdBxqEIvOZ_8CDoyndlArPrKiciy6FvA",
+   "url": "https://docs.google.com/forms/d/e/1FAIpQLScjjUp3hiOrBBAl3rcTvU5Uzkbvkv8fF99Ud7jS34TSEmO-eg/viewform",
+   "long": true
+  },
+  {
+   "question": "Do you believe the pros outweigh the cons?",
+   "sheet": "1lRxjNkD5LWmluHsEy2ykSRXgEBHzAdEe-ZxFNORSS-U",
+   "url": "https://docs.google.com/forms/d/e/1FAIpQLSefst_l85rgTo34YDEubXb-mmVFYIH8Mc91m0B3CjPoGCjmaQ/viewform",
+   "choices": [
+    "Yes",
+    "No",
+    "It depends"
+   ]
+  },
+  {
+   "question": "When should a model be open sourced?",
+   "sheet": "1Vz0iICtNTjY2PCENPNFJP7ILnpo6YNjHJAQ_wQp9qig",
+   "url": "https://docs.google.com/forms/d/e/1FAIpQLScnsz44Fso45VCI8HiCQsR7M0eanWUhHykmIFFuo7pCK5QjjQ/viewform",
+   "choices": [
+    "Always",
+    "After independent safety testing",
+    "Only for low-risk uses",
+    "Only to vetted researchers",
+    "Never"
+   ]
+  }
+ ]
+}

@@ -32,6 +32,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path.home() / "Projects" / "canvas-rollover"))  # Google token helper
 from canvas_rollover import access  # noqa: E402
 
 SKIP = {"timestamp", "email address", "email", "score"}
@@ -65,7 +66,23 @@ DEMO = [["Timestamp", "Email Address", "What's your program?", "One word for why
          "chatgpt", "Claude", "Copilot", "Gemini", "ChatGPT", "NotebookLM", "Claude", "chatgpt", "Cursor", "Gemini", "ChatGPT"])]
 
 
-def aggregate(sheet: str, choices: dict[str, list[str]]) -> dict:
+STOP = set("""a an the and or but of to in on for with at by from as is are was were be been being it its this that these
+those i we you they he she them our your their my me us not no yes so if then than can could should would will may
+might must do does did have has had more most less very also just about into over under because which who what when
+where how why all any some such other only own same too there here up out more many much each both few one model
+models open source sourcing""".split())
+
+
+def words(answers: list[str]) -> Counter:
+    c = Counter()
+    for a in answers:
+        for w in re.findall(r"[a-z][a-z\-']+", a.lower()):
+            if w not in STOP and len(w) > 2:
+                c[w] += 1
+    return c
+
+
+def aggregate(sheet: str, choices: dict[str, list[str]], long: bool = False) -> dict:
     vals = DEMO if sheet == "demo" else rows(sheet)
     if not vals:
         return {"n": 0, "questions": []}
@@ -80,6 +97,9 @@ def aggregate(sheet: str, choices: dict[str, list[str]]) -> dict:
             qs.append({"title": h, "kind": "bars", "n": len(answers),
                        "items": [[o, c.get(o, 0)] for o in choices[h]]
                        + [[o, k] for o, k in c.items() if o not in choices[h]]})
+        elif long:
+            qs.append({"title": h, "kind": "cloud", "n": len(answers),
+                       "items": [[w, k] for w, k in words(answers).most_common(80)]})
         else:
             c = Counter(norm(a) for a in answers)
             shown = {}
@@ -163,7 +183,7 @@ def aggregate_slides(slides: list[dict]) -> dict:
     """One slide per form: {"sheet", "url", "question", "choices"?}."""
     out = []
     for sl in slides:
-        a = aggregate(sl["sheet"], {sl["question"]: sl["choices"]} if sl.get("choices") else {})
+        a = aggregate(sl["sheet"], {sl["question"]: sl["choices"]} if sl.get("choices") else {}, sl.get("long", False))
         q = next((x for x in a["questions"] if x["title"].strip() == sl["question"].strip()), None)
         out.append(q or {"title": sl["question"], "kind": "bars" if sl.get("choices") else "cloud", "n": 0,
                          "items": [[o, 0] for o in sl.get("choices", [])]})

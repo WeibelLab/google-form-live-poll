@@ -1,0 +1,266 @@
+{
+ "course": "CSE 291A",
+ "folderId": "1hJejev5nmwiLTBaip6lp0uW7peNlXoIR",
+ "weeks": {
+  "1": [
+   {
+    "n": 1,
+    "question": "What's your program?",
+    "type": "choice",
+    "formId": "1gIjJYnQwLArpeQpoLIHEubkejp_lBaKozoqG2CrIDGI",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSdY-lZ7_thR0L_LSnpo2PFIfdN1F-V8Q-t9zO_pVtD8xtTxFw/viewform",
+    "sheetId": "1lUWtszxi9KVhDONy5jo-UjEaatZJ2Y1cY2d9bbbX3qM"
+   },
+   {
+    "n": 2,
+    "question": "One word for why you're taking this class",
+    "type": "text",
+    "formId": "18fV9pmtO0upOqY02UcpE7mVWuBVxQ2L8pehi5VnZadQ",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSfzC-EV5DGLGsQBfSnmROO4n5Ca0OB2w8vcOhXd5HSQcoQcVg/viewform",
+    "sheetId": "1YgBzyGNQX2_F-thcPkqy27fS5n3YdsyMjRWgqj2rs60"
+   },
+   {
+    "n": 3,
+    "question": "An AI tool you use every day",
+    "type": "text",
+    "formId": "1uP_VGx4STBKWhZ1WVye94muC5_AJYJ17yr0Vv024KNc",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSfDhs_jlpjPQzDzByAeYUvJrWkJWMvZ55UXaZlVNtkLV19UKA/viewform",
+    "sheetId": "1mA20Z_AahO_86owIjFjtQ5YcGkKfmVGBv8W2K78gkGo"
+   }
+  ],
+  "2": [
+   {
+    "n": 1,
+    "question": "Now that we've seen some potential harms, what are the benefits of open sourcing a model?",
+    "type": "text",
+    "formId": "17vHrrUhBgSm0GASZXk_-rwGBydTJuJUocBaKiiz0lzY",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLScjjUp3hiOrBBAl3rcTvU5Uzkbvkv8fF99Ud7jS34TSEmO-eg/viewform",
+    "sheetId": "1CNjrb_mYHIrKdBxqEIvOZ_8CDoyndlArPrKiciy6FvA"
+   },
+   {
+    "n": 2,
+    "question": "Do you believe the pros outweigh the cons?",
+    "type": "choice",
+    "formId": "1Y1h22jgHRejz8-wOVHjBTEJX-XkoBL2t8Fmxc3afaA8",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSefst_l85rgTo34YDEubXb-mmVFYIH8Mc91m0B3CjPoGCjmaQ/viewform",
+    "sheetId": "1lRxjNkD5LWmluHsEy2ykSRXgEBHzAdEe-ZxFNORSS-U"
+   },
+   {
+    "n": 3,
+    "question": "When should a model be open sourced?",
+    "type": "choice",
+    "formId": "1mLfLXyAjB-0uWVo6PAjYWVHWzFBL5eVWa2wgLxOGhFA",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLScnsz44Fso45VCI8HiCQsR7M0eanWUhHykmIFFuo7pCK5QjjQ/viewform",
+    "sheetId": "1Vz0iICtNTjY2PCENPNFJP7ILnpo6YNjHJAQ_wQp9qig"
+   }
+  ],
+  "3": [
+   {
+    "n": 1,
+    "question": "Question 1 (edit me)",
+    "type": "choice",
+    "formId": "1OKXemwNcP9Z4VifJP6SIkTa1F4nP9CbIQSsyL9f7Noo",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSd6nhg10V-DtQfZHuKeltxGnUl-Kkx526yCOAmT5lY9A2msIQ/viewform",
+    "sheetId": "1aPGh6UQ6lvoC1iDaVs-bwgFXw8U1g8Qi7wih7CTCQCA"
+   },
+   {
+    "n": 2,
+    "question": "Question 2 (edit me)",
+    "type": "text",
+    "formId": "1sg2PuHiF8F_mqxqJD_PX3zn5zjNZ4WCOlZvVfB2clwE",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSeLXYaqQmqjKCrCZBZUYRHg6SFl84tefvHFgqi0eX88_3FLrQ/viewform",
+    "sheetId": "1BG_cYamBD7L5Y83ToNhUAwfRG895wPx380gDfr0iy58"
+   },
+   {
+    "n": 3,
+    "question": "Question 3 (edit me)",
+    "type": "text",
+    "formId": "1h1u_W2PNik_Z1JoeCbJCw1He-T653cwHAwtbM_qER-Y",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSeAKZDdKFXbTr1bMU8U8IXq14MV4ltTn9r7esouK5BuJP6ozg/viewform",
+    "sheetId": "1tuVqFBBnBntj-UOglNN2bp7aCbK0SIqCbNhLJUlQx1Q"
+   }
+  ],
+  "4": [
+   {
+    "n": 1,
+    "question": "Question 1 (edit me)",
+    "type": "choice",
+    "formId": "1_ZHHuOTw1Wp2vS5Xg47MYvy18ghGKUZPh0pzeDLJUSg",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSdqvz5dKmYLONf484ZugiRbgnQtC9UEApfoenHmDJcWjCpHaw/viewform",
+    "sheetId": "1WCpa81YIjIBoiuQVrKF_TAAXJZg8R0O51R5xmHQCCio"
+   },
+   {
+    "n": 2,
+    "question": "Question 2 (edit me)",
+    "type": "text",
+    "formId": "1VAS9Y3fhROPZMapyGYUYcf1uNLf7k0cE6vqgFyuUcts",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSdbbgH0OqFi3DLo0gNJpirlLNpc8d_chIXtqcHbLXg5vKOjXQ/viewform",
+    "sheetId": "1Ryn-H5qFcCy2FaUjGIzPatS3yLtommOuV4CXGmuYhBw"
+   },
+   {
+    "n": 3,
+    "question": "Question 3 (edit me)",
+    "type": "text",
+    "formId": "1bQLG_tSLskjV9DRBm6nJ1q5KS9pX7EiAJboNQbDtvAw",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSep1kVPqzNH8ykkkSeYNpPjwlP5upZMs5IlVZzBtFFxUqb1-A/viewform",
+    "sheetId": "1GLVwa41gHi_4jf0wfVZ7t_EYV-Q3LPdF_5whOUCI8f8"
+   }
+  ],
+  "5": [
+   {
+    "n": 1,
+    "question": "Question 1 (edit me)",
+    "type": "choice",
+    "formId": "19ClxvQc9S12W46TbuCrJyyfsG__j5g5pMYht6Szed3c",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSdrz0d1gEL4OuoIH_QXByn1R6PN-YogpeoFiMKfGJplH0F9pQ/viewform",
+    "sheetId": "1YsugrYRywSTxucHrrwIUfAkeRqTk09qfRXeiJllZ6Gg"
+   },
+   {
+    "n": 2,
+    "question": "Question 2 (edit me)",
+    "type": "text",
+    "formId": "1IojLX9vGdxI3HH5xpQVrwVMtuJyUrSk8vuwJfS3GnNU",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSfy055BxpUp2mf5bunYWAcmbhDwvKga9xkhbFf-owPtNImFKw/viewform",
+    "sheetId": "1211n8RpqPppe7doGOHTjI3JbDMLpgZphDW5A5cBvFtY"
+   },
+   {
+    "n": 3,
+    "question": "Question 3 (edit me)",
+    "type": "text",
+    "formId": "1ikfKeq9fdmm0SGOj7bqtgT1Zauk6y3mpDe3_2aLBRE8",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSfwr4eMIKggPjJwG8qd3XG2LousQh6ngm-uCuUpM9Dg-_VHtA/viewform",
+    "sheetId": "1tsRbKkySVmKXOwR66SXBKCMQlY9FN5SacxKkX0nxNbs"
+   }
+  ],
+  "6": [
+   {
+    "n": 1,
+    "question": "Question 1 (edit me)",
+    "type": "choice",
+    "formId": "15o1ZArGn-kqxCAGQgIwKHYT0ujwGrUegymS9tarM5NA",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSeVw3W28JWXkxGuKFAlteVptp4JbY3Xz9SNTVaZL14jWAHfag/viewform",
+    "sheetId": "1I9MiL97hCeMoET9B3B8vBP0-C5Vxi9VOKosGZCm16cc"
+   },
+   {
+    "n": 2,
+    "question": "Question 2 (edit me)",
+    "type": "text",
+    "formId": "1IJEbnVgekV3H-Ft1o7Bwh6RFjznTB5Sxcwq50p15DtM",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSeXrul0Xfn-uPL06eNdsg5Re6PrHwx3s1LHgHCKLQCeMzVD5w/viewform",
+    "sheetId": "1EStAruUWRv0t52ZKEqdmDIRBoq6weSM-gwsEbjjHEhE"
+   },
+   {
+    "n": 3,
+    "question": "Question 3 (edit me)",
+    "type": "text",
+    "formId": "1SvVcHASeMRuVByV4qVAFZhXJScVdarBgVcxQ8y6kRg0",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSdkTSuqHB2L-JOOaMSR5iHSl_gqz9J5qhfBi7miPG1WcrvhCw/viewform",
+    "sheetId": "1tDqhYSEW6ExaKTu0aY4WfCKKfrcfuYgew_2xY1hUJ6s"
+   }
+  ],
+  "7": [
+   {
+    "n": 1,
+    "question": "Question 1 (edit me)",
+    "type": "choice",
+    "formId": "1wt2VruQ6bZwnhvVBAOuH0WvYAmsg_51q0e6aMuR1pF4",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSfhhc_nf6udiQipkiYHTj4xHXmSGp7s_vwfs6x9kkN1Hnt_kg/viewform",
+    "sheetId": "1U-LEUw8DOXFN-3CRJ2Rk4RzcWlB9EIosO-KGiiJFtA8"
+   },
+   {
+    "n": 2,
+    "question": "Question 2 (edit me)",
+    "type": "text",
+    "formId": "1r6HBDjqFMJjafp3DiXsj1osDs2PZCLzZAojJ3eSd2NI",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSerg7WLA75w8nv2FxMHb1l73rL6CyWiD30gwwhWlbtozFh6KQ/viewform",
+    "sheetId": "1TqRjnA7G-0j_rk-bc5mUKRDHSm_2fthaM0FuCZ1zzR8"
+   },
+   {
+    "n": 3,
+    "question": "Question 3 (edit me)",
+    "type": "text",
+    "formId": "1mylN54DG8e0bM6dDcB9TcC28LnnfIMf6FEEcKynR1CY",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSchXklM8C6F34qqbCc8116qGhjtcjA7exCzCAIGhFQWQp0FZg/viewform",
+    "sheetId": "1xZsqRggq7yWRXpJ20VTEhpvr3w9hzflWKhAt39CTW9g"
+   }
+  ],
+  "8": [
+   {
+    "n": 1,
+    "question": "Question 1 (edit me)",
+    "type": "choice",
+    "formId": "1BSsf1fs32ln1_e-ZZe-HEMi0vojEDhWiX_2CtMLHC04",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSdi7r3wAyDwB5kQt7YgecqFUmg8-AyalGgC8H4qZd3vqy-CuA/viewform",
+    "sheetId": "10Rw3iBwA8zBRFAtjLktI2gl2kWwIpg546l6YD61GG9A"
+   },
+   {
+    "n": 2,
+    "question": "Question 2 (edit me)",
+    "type": "text",
+    "formId": "1PiXRkeprAgns4J3GxAKJyVrvSZt16i4-gOtvjkh-8iw",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSckdr5rgLavfe8FZrIVe0Jp8jgieFzeY7wRwU2w1kWethZEtA/viewform",
+    "sheetId": "1qymNIeEvLIpxdIfQqMWMHH8kBPFzd4Epe2t8PgAtJM8"
+   },
+   {
+    "n": 3,
+    "question": "Question 3 (edit me)",
+    "type": "text",
+    "formId": "1gpQ_fES8Kk9phs68Sm1eD7v476PR8zbPKGONZT4IW8M",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSfMbQDPaMrWRP6hKok-gGA_ZbVZuJPaYJWQhmKJHxc2lPjbsA/viewform",
+    "sheetId": "1pPTVdN_fIzsSuhv7uN_KvbEXLa9LBUsQ5dy3yb54dK0"
+   }
+  ],
+  "9": [
+   {
+    "n": 1,
+    "question": "Question 1 (edit me)",
+    "type": "choice",
+    "formId": "167Sm5-eN3ADywe_i0UHibLWJJ36EUEP-W7Wig3lQej8",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSdlJR5L4E8nOyxzS55WI2eE92mRWWCdsiLiWb9Iy1k3ytCP1w/viewform",
+    "sheetId": "1oJm59TgwO4JXiCz5_MMhlKewE7yxdkE9u5zy00n7otA"
+   },
+   {
+    "n": 2,
+    "question": "Question 2 (edit me)",
+    "type": "text",
+    "formId": "185M0Dr0ex6_sduPEEz4tIjRpbLZoplIWsrRr-3yunIs",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSeNjfRy7o08F7-JKOCWdR9BMpV154FRTiKj3s_mEp7bUnnB9A/viewform",
+    "sheetId": "1cm_48PggGyviSJqCU_SKE8PWdff1zi_PwGiTN6aS4IY"
+   },
+   {
+    "n": 3,
+    "question": "Question 3 (edit me)",
+    "type": "text",
+    "formId": "1-CAA7o0CLZgJNymWWWlqiQhch4Jy7-7bLsXtsJ5G9P8",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLScS5WQdxBuAPta2pCozae66htwMjJIG4a4Yotrdmpd8X90ENw/viewform",
+    "sheetId": "1lSJnCMPaSM4-JLLx1sN6uO-SDPSyBTAjnhF4ML5khKs"
+   }
+  ],
+  "10": [
+   {
+    "n": 1,
+    "question": "Question 1 (edit me)",
+    "type": "choice",
+    "formId": "1ZSs4KI8L0ZrgDflHzl3488wZWJwPIRWjA5BQ1yeKgps",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSdgf4rVgWGPVD-iKrhLvGBT7OO-NCC7nkeqQaU9vzYlvgwBCA/viewform",
+    "sheetId": "1q0_ydKpHGX7QnQ__y0ZHuAh2hsJT2OflmZl_0xXatGU"
+   },
+   {
+    "n": 2,
+    "question": "Question 2 (edit me)",
+    "type": "text",
+    "formId": "1kEF1rJOw_TFL0cGSwZ9BpHyBXfyp2AregqpzxLmJQjE",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSfqwff7c8sg63T3eSews2f4paKFB9w8Tqg4vpUqkymdsuhMlQ/viewform",
+    "sheetId": "1l1euKNidop9BkY_8GBBbTAIkap9ExvOYM66WX7MOUXU"
+   },
+   {
+    "n": 3,
+    "question": "Question 3 (edit me)",
+    "type": "text",
+    "formId": "1sua_ysDWf8lrjJUQGDaQH-5Iyk5dc_YaBXBmbS_eCtE",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSd2bsRKzYLcUrGduWeMMWrZOvJQpONl4l_kTVdZkybzZMR69A/viewform",
+    "sheetId": "1bp3ljHnC3uLmeLMftC3vSuk1Z9LwniJWHUntslpco_U"
+   }
+  ]
+ }
+}
