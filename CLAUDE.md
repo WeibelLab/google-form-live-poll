@@ -4,8 +4,11 @@ Slido-style live poll board on Google Forms for CSE 291A (Fall 2026). Owner: Nad
 
 ## Decisions (2026-10-05)
 
-- **Name:** repo `google-form-live-poll` under GitHub org `WeibelLab` (public, GitHub Pages). Not created yet.
-- **Data stays in Google.** Forms and response data live in Nadir's Drive. The board on GitHub Pages runs in the browser, the instructor signs in with Google, and the page reads Forms/Drive with that token. No backend stores emails. The repo holds no student data and no keys. Drive IDs in the repo are fine: the files are private to Nadir and course staff.
+- **Repo:** https://github.com/WeibelLab/google-form-live-poll (public, created 2026-10-05). Pages from `main` `/docs`: https://weibellab.github.io/google-form-live-poll/
+- **Architecture (Nadir 2026-10-05: board must be on GitHub Pages, nothing running on his machine, Claude clustering in the cloud):** board `docs/index.html` on Pages polls the Apps Script web app (`apps-script/Board.gs`, `doGet`), which reads responses directly from the forms (FormApp, no Sheet lag) and returns only aggregates. Web app: execute as Nadir, access Anyone, guarded by `BOARD_KEY` (script property). The key travels in the link hash `#k=` and is never in the repo. Board link: `https://weibellab.github.io/google-form-live-poll/?course=cse291a&week=N#k=BOARD_KEY`. Web app URL goes in `docs/config.js`. No Google Cloud project needed.
+- **Themes:** paragraph questions get Claude themes (`claude-opus-5-5`, effort low, JSON schema output, server-side fallback default) computed in Apps Script when the answer count changes; API key in script property `ANTHROPIC_API_KEY` (entered by Nadir). Board key T toggles themes/words.
+- **Credit:** `exportCredit(week)` writes tab `Week NN` (email, per-question timestamp, count) to private Sheet `Participation credit` in Discussion Polls.
+- **Data stays in Google.** Emails never leave FormApp/Sheets; the endpoint returns aggregates only. The repo holds no student data and no keys. Drive IDs in the repo are fine: the files are private to Nadir and course staff.
 - **Folder-driven.** Course root folder = "Discussion Polls" (`1hJejev5nmwiLTBaip6lp0uW7peNlXoIR`, inside `CSE291A - Fall 2026`). One subfolder per week. Every Google Form in a week folder becomes a slide, ordered by file name (`W02 Q1 - ...`). Any extra form added to the folder is picked up.
 - **Chart by question type:** multiple choice gives bars; short text gives a word cloud of whole answers (Slido style); long text (paragraph) gives a word cloud of single words, later themes (clustering, method pending Nadir: Claude via Apps Script vs in-browser embeddings).
 - **Form settings (all forms):** verified email, 1 response per user, sign-in required, responders limited to ucsd.edu (Drive permission `domain ucsd.edu reader view=published`, `anyone` removed), linked response Sheet in the same week folder.
@@ -40,7 +43,8 @@ Slido-style live poll board on Google Forms for CSE 291A (Fall 2026). Owner: Nad
 
 - Discussion Polls folder is shared as editor with wel008 (TA) and aabroukh; response Sheets inherit that. Nadir to confirm aabroukh.
 - Clustering method for long answers.
-- Google Cloud project + OAuth client for the Pages board sign-in.
+- Nadir to: run `createBoardKey`, add `ANTHROPIC_API_KEY`, deploy web app (Anyone), send web app URL. Then test with Week 1 (not Week 2) and measure latency; Nadir deletes the test response.
+- aabroukh access confirmed OK by Nadir (2026-10-05).
 
 ## Current state
 
