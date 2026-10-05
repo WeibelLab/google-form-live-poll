@@ -11,17 +11,18 @@ Live polls for class discussions, built on Google Forms. Students scan a QR code
 ## Contents
 
 1. [How it works](#how-it-works)
-2. [Where the data lives: the course folder](#where-the-data-lives-the-course-folder)
-3. [Class instances](#class-instances)
-4. [For TAs: running a class](#for-tas-running-a-class)
-5. [For TAs: preparing the questions](#for-tas-preparing-the-questions)
-6. [Question types and what the board shows](#question-types-and-what-the-board-shows)
-7. [Removing answers](#removing-answers-tests-duplicates-inappropriate-text)
-8. [Participation credit](#participation-credit)
-9. [Setting up a new course](#setting-up-a-new-course)
-10. [Privacy](#privacy)
-11. [Troubleshooting](#troubleshooting)
-12. [Repository layout](#repository-layout)
+2. [Admin page](#admin-page)
+3. [Where the data lives: the course folder](#where-the-data-lives-the-course-folder)
+4. [Class instances](#class-instances)
+5. [For TAs: running a class](#for-tas-running-a-class)
+6. [For TAs: preparing the questions](#for-tas-preparing-the-questions)
+7. [Question types and what the board shows](#question-types-and-what-the-board-shows)
+8. [Removing answers](#removing-answers-tests-duplicates-inappropriate-text)
+9. [Participation credit](#participation-credit)
+10. [Setting up a new course](#setting-up-a-new-course)
+11. [Privacy](#privacy)
+12. [Troubleshooting](#troubleshooting)
+13. [Repository layout](#repository-layout)
 
 ## How it works
 
@@ -40,6 +41,24 @@ Live polls for class discussions, built on Google Forms. Students scan a QR code
 - **Credit** is written by the same script to a private Google Sheet.
 
 Measured on 2026-10-05: an answer appears on the board about 2 s after the student taps Submit.
+
+## Admin page
+
+Everything a TA or instructor does happens on one private page:
+
+https://script.google.com/a/macros/ucsd.edu/s/AKfycbwQ_D73yvzjz_Gg3jpo7DlhbH8wI4HGrCRUN6s7Bs1btouSh-GG8cDjeluvSUYun_3x/exec?admin
+
+| Tab | What it does |
+|---|---|
+| Questions | Edit each week's questions, type and choices, or add a question (creates a new styled form). |
+| Answers | List a week's answers (email, time, text), delete selected ones from the form and its Sheet, refresh the credit Sheet. |
+| Board links | The board link for every week of the course. |
+| New course | Set up a new class instance: folders, style master, forms, live updates. |
+| Admins | Who can use this page. |
+
+**Access.** You must be signed in with a UC San Diego Google account, and be the script owner or listed on the **Admins** tab. Anyone else sees "no access". The page runs with the owner's permissions, so admins don't need to authorize anything or have access to the Apps Script project.
+
+**Code access.** The code is on GitHub (WeibelLab/google-form-live-poll). Changes to the board (`docs/`) go live through GitHub Pages within a minute. The backend (`apps-script/`) runs in the owner's Apps Script project and is updated there by the owner.
 
 ## Where the data lives: the course folder
 
@@ -80,8 +99,8 @@ Google allows 20 triggers per script; each running course uses up to 6 (current 
 
 **Before class (2 minutes)**
 
-1. Open the admin page, **Board links** tab (or the Doc **Board links (staff only)** in the course folder), and open this week's link.
-2. Open it on the classroom computer. Check that the questions are the right ones and show 0 responses.
+1. On the classroom computer, open this week's board: the **Live poll ▶** button in the slides, or the admin page, **Board links** tab.
+2. Check that the questions are the right ones and show 0 responses.
 
 **In class**
 
@@ -100,9 +119,7 @@ Google allows 20 triggers per script; each running course uses up to 6 (current 
 
 ## For TAs: preparing the questions
 
-Use the **admin page** (link in the Board links Doc and below):
-
-https://script.google.com/a/macros/ucsd.edu/s/AKfycbwQ_D73yvzjz_Gg3jpo7DlhbH8wI4HGrCRUN6s7Bs1btouSh-GG8cDjeluvSUYun_3x/exec?admin
+Use the [admin page](#admin-page):
 
 - **Questions** tab: pick the week, edit the question, type and choices, **Save**. Questions that already have answers are locked; delete the answers first (Answers tab) or add a new question.
 - **Add a question** at the bottom of the week: it creates a new styled form with all settings. It shows up on the board within 30 seconds.
@@ -123,7 +140,7 @@ The board picks the display from the question type in Google Forms.
 
 | Type in Google Forms | Board |
 |---|---|
-| Multiple choice, Dropdown | Bars with % and count, in the form's order |
+| Multiple choice, Dropdown | Bars with % and count, in the form's order. Answers typed into "Other" are counted as one **Other** bar; the text is not shown. |
 | Checkboxes | Bars, % of students who picked each option |
 | Short answer | Word cloud of whole answers ("Claude Code" stays one item) |
 | Paragraph | Claude themes: 3 to 7 groups with a summary and one real answer each. **T** switches to a word cloud. |
@@ -181,12 +198,14 @@ After a code change: save, then Deploy, Manage deployments, edit each deployment
 
 | Problem | Fix |
 |---|---|
-| Board says "bad key" | The link is missing part of the key after `#k=`. Copy it again from the Board links Doc. |
+| Board says "bad key" | The link is missing part of the key after `#k=`. Copy it again from the admin page, Board links tab. |
 | A question doesn't show | Check the form is in the right week folder, its name starts with `WNN QN - `, and its type is in the table above. Wait 30 s. |
 | Answers appear after about 3 s instead of 2 s | The form has no submit trigger yet (new form, or week not current). It is added by the 6 am job. |
 | Themes don't appear | Fewer than 3 answers, or `ANTHROPIC_API_KEY` missing. Press T for the word cloud. |
 | GitHub Pages is down | On a Mac: `python3 -m http.server 8770 --directory docs` in this repo, then use `http://localhost:8770/` instead of the GitHub address in the link. |
 | A student can't open the form | They must sign in with their UCSD Google account (not a personal Gmail). |
+| "No access" on the admin page | Sign in with your UCSD account and ask the owner to add you on the Admins tab. |
+| A question can't be edited | It already has answers. Delete them on the Answers tab, or add a new question. |
 
 ## Repository layout
 
@@ -195,7 +214,7 @@ docs/                 board (GitHub Pages): index.html, config.js, img/
 apps-script/          Apps Script project: Setup.gs (courses, forms), Board.gs (endpoint, themes, credit), Push.gs (Firebase),
                       Admin.gs + admin.html (admin page), appsscript.json
 firebase/             database rules
-prototype/            first local version (Python), kept as a fallback
+prototype/            first local version (Python, reads the response Sheets), no longer used
 assets/               form header image
 HANDOFF.md            original requirements
 CLAUDE.md             decisions and current state
