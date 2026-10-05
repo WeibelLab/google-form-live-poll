@@ -209,7 +209,30 @@ document.addEventListener('keydown', e => {
   else if (e.key === 't' || e.key === 'T') { view = view === 'themes' ? 'words' : 'themes'; draw(true); }
 });
 window.addEventListener('resize', () => draw(true));
-if (!API || !KEY) document.getElementById('q').textContent = 'Board link is missing its key.';
+// Demo mode (?demo=1): sample data for each question type, no backend. Used for docs and training.
+if (P.get('demo')) {
+  D = { at: 1, slides: [
+    { formId: 'd1', kind: 'bars', title: "What's your program?", url: 'https://example.com/form', n: 41,
+      items: [['Grad: CSE MS', 28], ['Grad: CSE PhD', 1], ['Grad: DSC', 2], ['Grad: other program', 9], ['Undergrad', 1]] },
+    { formId: 'd2', kind: 'cloud', title: 'An AI tool you use every day', url: 'https://example.com/form', n: 43,
+      items: [['Claude', 12], ['Gemini', 9], ['Codex', 7], ['ChatGPT', 6], ['Claude Code', 4], ['Cursor', 3], ['Copilot', 2], ['Notion', 1], ['Perplexity', 1]] },
+    { formId: 'd3', kind: 'scale', title: 'The benefits of tracking employee demographic data outweigh the risks.', url: 'https://example.com/form', n: 38,
+      items: [['1', 3], ['2', 7], ['3', 11], ['4', 12], ['5', 5]], avg: 3.2, lo: 1, hi: 5, loLabel: 'Strongly disagree', hiLabel: 'Strongly agree' },
+    { formId: 'd4', kind: 'grid', title: 'How helpful would each governance structure be for bias mitigation?', url: 'https://example.com/form', n: 36,
+      rows: ['Internal ethics board', 'Independent external audit', 'Government regulation', 'User or community advisory panel', 'Open public scrutiny'],
+      cols: ['Not helpful', 'Somewhat helpful', 'Very helpful'], counts: [[8, 20, 8], [2, 12, 22], [6, 16, 14], [4, 14, 18], [10, 18, 8]], items: [] },
+    { formId: 'd5', kind: 'long', title: 'How can users be integrated into the bias mitigation process?', url: 'https://example.com/form', n: 34,
+      items: [['feedback', 14], ['testing', 9], ['diverse', 8], ['panels', 6], ['reporting', 5], ['audits', 4], ['community', 4]] },
+  ] };
+  TH.d5 = { n: 34, themes: [
+    { label: 'User feedback loops', count: 12, summary: 'Let users flag biased outputs and feed reports back into retraining.', example: 'A simple report button that goes straight to the team that retrains the model.' },
+    { label: 'Diverse user testing', count: 9, summary: 'Test with users from the groups most likely to be harmed before launch.', example: 'Recruit testers from communities the model will affect, not just employees.' },
+    { label: 'Community advisory panels', count: 7, summary: 'Give affected communities a standing role in design decisions.', example: 'A paid advisory panel that reviews major changes.' },
+    { label: 'Transparency to users', count: 6, summary: 'Explain how the system works so users can spot problems.', example: 'Show users why a recommendation was made.' },
+  ] };
+  document.getElementById('title').textContent = (C.title || 'Live Poll') + ' · Demo';
+  draw(true);
+} else if (!API || !KEY) document.getElementById('q').textContent = 'Board link is missing its key.';
 else { tick(); setInterval(tick, listen() ? 3000 : 500); themeTick(); }
 </script>
 </body>

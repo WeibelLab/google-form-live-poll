@@ -1,0 +1,12 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "boards": {
+      "$key": {
+        ".read": "$key.length >= 64",
+        ".write": false
+      }
+    }
+  }
+}
