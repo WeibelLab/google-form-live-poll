@@ -49,6 +49,14 @@ aside .h{font-weight:700;color:var(--navy);font-size:20px;margin-bottom:8px}
 .nav{font-size:13px;color:#889;margin-top:10px;line-height:1.5}
 .hide{display:none!important}
 #msg{color:#b23a48;font-size:14px;margin-top:8px}
+#home{max-width:640px;margin:60px auto;padding:0 20px;text-align:center}
+#home h2{color:var(--navy);font-size:30px;margin:0 0 10px}
+#home p{color:var(--muted);font-size:17px;line-height:1.5}
+#home .btns{display:flex;flex-direction:column;gap:12px;margin:28px auto 0;max-width:360px}
+#home a.btn{display:block;padding:14px 18px;border-radius:10px;font-size:18px;font-weight:700;text-decoration:none;border:2px solid var(--navy);color:var(--navy);background:#fff}
+#home a.btn.primary{background:var(--navy);color:#fff;border-color:var(--gold)}
+#home a.btn:hover{border-color:var(--gold)}
+#home small{display:block;margin-top:6px;font-weight:400;font-size:14px;opacity:.85}
 @media (max-width:800px){main{flex-direction:column;height:auto}aside{width:100%}.bar .lab{width:40%}.bar .pct{width:80px}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.2.2/wordcloud2.min.js"></script>
@@ -232,7 +240,22 @@ if (P.get('demo')) {
   ] };
   document.getElementById('title').textContent = (C.title || 'Live Poll') + ' · Demo';
   draw(true);
-} else if (!API || !KEY) document.getElementById('q').textContent = 'Board link is missing its key.';
+} else if (!KEY) {
+  // No board link: start page with links to the admin page, the demo and the docs.
+  const cfg = window.BOARD_CONFIG || {};
+  document.getElementById('title').textContent = 'Google Form Live Poll';
+  document.title = 'Google Form Live Poll';
+  document.querySelector('main').outerHTML = `<div id="home">
+    <h2>Live polls on Google Forms</h2>
+    <p>Students answer with their university Google account. The board shows the results live, and participation credit comes out of a Google Sheet.</p>
+    <div class="btns">
+      <a class="btn primary" href="${cfg.admin || '#'}">Admin page<small>Questions, answers, board links, new courses (sign-in required)</small></a>
+      <a class="btn" href="?course=cse291a&demo=1">Demo board<small>Sample data for every question type</small></a>
+      <a class="btn" href="https://github.com/WeibelLab/google-form-live-poll#readme">Documentation</a>
+    </div>
+    <p style="margin-top:28px;font-size:14px">To show a poll in class, use the board link for the week (Board links tab on the admin page).</p>
+  </div>`;
+} else if (!API) document.getElementById('q').textContent = 'Board is not configured.';
 else { tick(); setInterval(tick, listen() ? 3000 : 500); themeTick(); }
 </script>
 </body>

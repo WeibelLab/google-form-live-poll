@@ -2,7 +2,8 @@
 
 Live polls for class discussions, built on Google Forms. Students scan a QR code, sign in with their UCSD account and answer on their phone. The projector shows the results live: bars, word clouds, agreement scales, grids, and themes for open answers grouped by Claude. Every answer is stored with the student's verified UCSD email, so participation credit comes out of a Google Sheet.
 
-- Board: https://weibellab.github.io/google-form-live-poll/
+- **[Open the admin page](https://script.google.com/a/macros/ucsd.edu/s/AKfycbwQ_D73yvzjz_Gg3jpo7DlhbH8wI4HGrCRUN6s7Bs1btouSh-GG8cDjeluvSUYun_3x/exec?admin)** (questions, answers, board links, new courses; UCSD sign-in, admins only)
+- Start page: https://weibellab.github.io/google-form-live-poll/
 - Demo with sample data: https://weibellab.github.io/google-form-live-poll/?course=cse291a&demo=1
 - Used in: CSE 291A Human-Centered AI, Fall 2026 (Nadir Weibel, TA Weichen Liu)
 
