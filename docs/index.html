@@ -174,7 +174,9 @@ async function tick() {
   try {
     const d = await get({ week: WEEK });
     if (d.error) { document.getElementById('msg').textContent = d.error; }
-    else if (d.at >= lastAt) { lastAt = d.at; D = d; mergePushed(); document.getElementById('msg').textContent = ''; draw(false); }
+    else if (d.at >= lastAt) {
+      if (d.course && d.course.title) document.getElementById('title').textContent = d.course.title + (d.course.term ? ' (' + d.course.term + ')' : '') + ' · Week ' + WEEK;
+      lastAt = d.at; D = d; mergePushed(); document.getElementById('msg').textContent = ''; draw(false); }
   } catch (e) { document.getElementById('msg').textContent = 'Connection problem, retrying'; }
   inflight--;
 }

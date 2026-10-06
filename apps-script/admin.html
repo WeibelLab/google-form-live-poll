@@ -74,19 +74,26 @@ a{color:#1f5fa8}
     <p class="muted">Open the link for the week on the classroom computer. Staff only: the key at the end of the link unlocks the results.</p>
     <ul id="links" class="links"></ul>
     <p><a id="folder" target="_blank">Open the course folder in Google Drive</a></p>
+    <div class="card"><h3>Course name and term</h3>
+      <div class="row"><label>Title</label><input id="c-title" class="wide"></div>
+      <div class="row"><label>Term</label><input id="c-term" placeholder="Fall 2026"> <button class="act" id="c-save">Save</button>
+        <span class="muted">Short name in links: <b id="c-slug"></b> (fixed, so existing links and slide buttons keep working)</span></div></div>
   </section>
 
   <section id="tab-new" class="hide">
     <h2>New course</h2>
     <p class="muted">First create a folder in a Shared Drive (or a shared folder) for the course, add the teaching team, and give <b id="owner"></b> edit access. Then fill this in.</p>
     <div class="row"><label>Title</label><input id="n-title" class="wide" placeholder="CSE 291A: Human-Centered AI"></div>
-    <div class="row"><label>Short label on forms</label><input id="n-name" placeholder="CSE 291A"></div>
-    <div class="row"><label>Short name in links</label><input id="n-slug" placeholder="cse291a-wi27"></div>
+    <div class="row"><label>Term</label><input id="n-term" placeholder="Fall 2027">
+      <label>Short label on forms</label><input id="n-name" placeholder="CSE 291A"></div>
+    <div class="row"><label>Short name in links</label><input id="n-slug" placeholder="cse291a-fa27"></div>
     <div class="row"><label>Course folder link</label><input id="n-folder" class="wide" placeholder="https://drive.google.com/drive/folders/..."></div>
     <div class="row"><label>First class</label><input id="n-start" type="date">
       <label>Weeks</label><input id="n-weeks" type="number" value="10" min="1" max="20" style="width:70px">
       <label>Questions per week</label><input id="n-per" type="number" value="3" min="1" max="6" style="width:70px">
       <label>Email domain</label><input id="n-domain" value="ucsd.edu" style="width:120px"></div>
+    <div class="row"><label>Copy questions from</label><select id="n-copy"></select>
+      <span class="muted">Copies each week's questions, types and choices (never answers). Weeks the old course doesn't have get templates.</span></div>
     <div class="row"><button class="act" id="n-go">1. Create course folders</button></div>
     <div id="n-step2" class="card hide"><h3>2. Look of the forms (optional)</h3>
       <p>All forms are copies of the <a id="n-master" target="_blank">style master</a>. It starts with the CSE 291A look. To change the header image or color, open it, click the palette icon, change it, then come back.</p>
@@ -120,7 +127,8 @@ document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
 async function load() {
   S = await call('adminState');
   $('me').textContent = S.me; $('owner').textContent = S.owner;
-  $('course').innerHTML = S.courses.map(c => `<option value="${esc(c.slug)}">${esc(c.title)}</option>`).join('');
+  $('course').innerHTML = S.courses.map(c => `<option value="${esc(c.slug)}">${esc(c.label)}${c.ended ? ' · ended' : ''}</option>`).join('');
+  $('n-copy').innerHTML = '<option value="">No, start from templates</option>' + S.courses.map(c => `<option value="${esc(c.slug)}">${esc(c.label)}</option>`).join('');
   if (slug && S.courses.some(c => c.slug === slug)) $('course').value = slug;
   slug = $('course').value;
   $('admins').value = S.admins.join('\n');
@@ -135,6 +143,7 @@ function pickCourse() {
   $('qweek').value = c.currentWeek; $('aweek').value = c.currentWeek;
   $('links').innerHTML = c.boardLinks.map((u, i) => `<li>Week ${i + 1}: <a href="${esc(u)}" target="_blank">open board</a> <button class="sec" onclick="navigator.clipboard.writeText('${esc(u)}');msg('Link copied',1)">copy link</button></li>`).join('');
   $('folder').href = c.folderUrl;
+  $('c-title').value = c.title; $('c-term').value = c.term; $('c-slug').textContent = c.slug;
   $('alist').innerHTML = '';
   loadWeek();
 }
@@ -240,11 +249,12 @@ $('aweek').onchange = () => { $('alist').innerHTML = ''; selCount(); };
 // ---------- New course ----------
 let NEW = null;
 $('n-go').onclick = async () => {
-  const d = { title: $('n-title').value, name: $('n-name').value, slug: $('n-slug').value, folder: $('n-folder').value,
-              start: $('n-start').value, weeks: $('n-weeks').value, domain: $('n-domain').value };
+  const d = { title: $('n-title').value, term: $('n-term').value, name: $('n-name').value, slug: $('n-slug').value, folder: $('n-folder').value,
+              start: $('n-start').value, weeks: $('n-weeks').value, domain: $('n-domain').value, copyFrom: $('n-copy').value };
   $('n-go').disabled = true;
   try {
     NEW = await call('adminCreateCourse', d);
+    NEW.copyFrom = d.copyFrom;
     $('n-master').href = NEW.masterUrl;
     $('n-step2').classList.remove('hide');
     $('n-progress').textContent = 'Folders created.';
@@ -255,12 +265,17 @@ $('n-forms').onclick = async () => {
   $('n-forms').disabled = true;
   for (let w = 1; w <= NEW.weeks; w++) {
     $('n-progress').textContent = `Creating forms: week ${w} of ${NEW.weeks}…`;
-    await call('adminCreateWeekForms', NEW.slug, w, per);
+    await call('adminCreateWeekForms', NEW.slug, w, per, NEW.copyFrom || '');
   }
   $('n-progress').textContent = 'Turning on live updates…';
   await call('adminSyncTriggers');
   $('n-progress').textContent = 'Done. Edit the questions on the Questions tab; board links are on the Board links tab.';
   slug = NEW.slug; await load();
+};
+
+$('c-save').onclick = async () => {
+  S = await call('adminUpdateCourse', slug, $('c-title').value, $('c-term').value);
+  msg('Saved.', 1); await load();
 };
 
 // ---------- Admins ----------

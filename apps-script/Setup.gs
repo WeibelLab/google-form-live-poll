@@ -14,7 +14,7 @@
 
 const MASTER_NAME = '_Style master (do not delete)';
 const SEED_COURSE = {
-  slug: 'cse291a', title: 'CSE 291A: Human-Centered AI', name: 'CSE 291A',
+  slug: 'cse291a', title: 'CSE 291A: Human-Centered AI', term: 'Fall 2026', name: 'CSE 291A',
   folderId: '1hJejev5nmwiLTBaip6lp0uW7peNlXoIR', start: '2026-09-29', weeks: 10, domain: 'ucsd.edu',
 };
 // Master form used as the style source for new courses (CSE 291A's).
@@ -39,6 +39,26 @@ function course_(slug) {
   const c = getCourses_().filter(function (x) { return x.slug === slug; })[0];
   if (!c) throw new Error('unknown course ' + slug);
   return c;
+}
+
+function courseLabel_(c) {
+  return c.title + (c.term ? ' (' + c.term + ')' : '');
+}
+
+// Last day a course needs live updates: one week after its last class.
+function courseEnded_(c) {
+  const end = new Date(weekDate_(c, c.weeks) + 'T12:00:00');
+  end.setDate(end.getDate() + 7);
+  return Utilities.formatDate(end, 'America/Los_Angeles', 'yyyy-MM-dd') < Utilities.formatDate(new Date(), 'America/Los_Angeles', 'yyyy-MM-dd');
+}
+
+// Spec (as used by addItem_) from a form description (describeForm_), to copy a question.
+function specFromForm_(d) {
+  if (d.kind === 'bars') return d.multi ? { q: d.title, choices: d.choices, multi: true, other: !!d.other } : { q: d.title, choices: d.choices, other: !!d.other };
+  if (d.kind === 'cloud') return { q: d.title, short: true };
+  if (d.kind === 'scale') return { q: d.title, scale: [d.lo || 1, d.hi || 5, d.loLabel || '', d.hiLabel || ''] };
+  if (d.kind === 'grid') return { q: d.title, grid: { rows: d.rows, cols: d.cols } };
+  return { q: d.title };
 }
 
 function courseByFolder_(folderId) {

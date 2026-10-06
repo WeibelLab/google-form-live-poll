@@ -44,7 +44,8 @@ function adminState() {
   const courses = getCourses_().map(function (c) {
     let cur = 1;
     try { cur = currentWeek_(c); } catch (e) { /* folder missing */ }
-    return { slug: c.slug, title: c.title, name: c.name, start: c.start, weeks: c.weeks, domain: c.domain,
+    return { slug: c.slug, title: c.title, term: c.term || '', label: courseLabel_(c), ended: courseEnded_(c),
+             name: c.name, start: c.start, weeks: c.weeks, domain: c.domain,
              folderUrl: 'https://drive.google.com/drive/folders/' + c.folderId, currentWeek: cur,
              boardLinks: Array.from({ length: c.weeks }, function (_, i) { return boardLink_(c.slug, i + 1); }) };
   });
@@ -160,7 +161,8 @@ function adminCreateCourse(d) {
   const folder = DriveApp.getFolderById(m[1]);   // fails if the owner has no access
   if (list.some(function (c) { return c.folderId === m[1]; })) throw new Error('This folder is already used by another course.');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d.start || '')) throw new Error('First class date: YYYY-MM-DD.');
-  const c = { slug: slug, title: String(d.title || slug).trim(), name: String(d.name || d.title || slug).trim(),
+  if (d.copyFrom) course_(d.copyFrom);
+  const c = { slug: slug, title: String(d.title || slug).trim(), term: String(d.term || '').trim(), name: String(d.name || d.title || slug).trim(),
               folderId: folder.getId(), start: d.start, weeks: Math.max(1, Math.min(20, Number(d.weeks) || 10)),
               domain: String(d.domain || 'ucsd.edu').trim() };
   list.push(c);
@@ -170,12 +172,35 @@ function adminCreateCourse(d) {
   return { slug: slug, masterUrl: 'https://docs.google.com/forms/d/' + master.getId() + '/edit', weeks: c.weeks };
 }
 
-// Called once per week by the page, so each call stays short.
-function adminCreateWeekForms(slug, week, perWeek) {
+// Called once per week by the page, so each call stays short. copyFrom: course to copy
+// that week's questions from (questions only, never answers); otherwise templates.
+function adminCreateWeekForms(slug, week, perWeek, copyFrom) {
   needAdmin_();
   const c = course_(slug);
-  for (let n = 1; n <= Math.max(1, Math.min(6, Number(perWeek) || 3)); n++) ensureForm_(c, Number(week), n, templateSpec_(n));
-  return week;
+  week = Number(week);
+  let specs = [];
+  if (copyFrom) {
+    try {
+      specs = weekForms_(course_(copyFrom).folderId, week).map(function (f) { return specFromForm_(f); });
+    } catch (e) { specs = []; }
+  }
+  if (!specs.length) {
+    for (let n = 1; n <= Math.max(1, Math.min(6, Number(perWeek) || 3)); n++) specs.push(templateSpec_(n));
+  }
+  specs.forEach(function (spec, i) { ensureForm_(c, week, i + 1, spec); });
+  return { week: week, questions: specs.length };
+}
+
+// Rename a course or change its term (links and folders stay the same).
+function adminUpdateCourse(slug, title, term) {
+  needAdmin_();
+  const list = getCourses_();
+  const c = list.filter(function (x) { return x.slug === slug; })[0];
+  if (!c) throw new Error('unknown course ' + slug);
+  if (title) c.title = String(title).trim();
+  c.term = String(term || '').trim();
+  saveCourses_(list);
+  return adminState();
 }
 
 function adminSyncTriggers() {

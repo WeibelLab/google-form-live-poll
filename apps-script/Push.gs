@@ -68,6 +68,7 @@ function currentWeek_(c) {
 function syncTriggers() {
   const want = {};
   getCourses_().forEach(function (c) {
+    if (courseEnded_(c)) return;   // finished courses: board still works, polling only
     const w = currentWeek_(c);
     [w, w + 1].forEach(function (wk) {
       try { weekForms_(c.folderId, wk).forEach(function (f) { want[f.id] = true; }); } catch (err) { /* no folder */ }

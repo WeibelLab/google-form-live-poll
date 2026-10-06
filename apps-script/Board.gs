@@ -122,7 +122,8 @@ function weekData_(root, week) {
   const hit = cache.get(ck);
   if (hit) return JSON.parse(hit);
   const slides = weekForms_(root, week).map(aggregateForm_);
-  const out = { week: week, at: Date.now(), slides: slides };
+  const c = courseByFolder_(root);
+  const out = { week: week, at: Date.now(), slides: slides, course: c ? { title: c.title, term: c.term || '' } : null };
   cache.put(ck, JSON.stringify(out), 1);
   return out;
 }
