@@ -126,6 +126,7 @@ Use the [admin page](#admin-page):
 
 - **Questions** tab: pick the week, edit the question, type and choices, **Save**. Questions that already have answers are locked; delete the answers first (Answers tab) or add a new question.
 - **Add a question** at the bottom of the week: it creates a new styled form with all settings. It shows up on the board within 30 seconds.
+- **Remove question** moves the form and its response Sheet to the Drive trash (restorable for 30 days). Answers to a removed question no longer count for credit.
 - The **Board links** tab has the board link for every week.
 
 Tips for good poll questions:

@@ -109,6 +109,23 @@ function adminAddQuestion(slug, week, q) {
   return adminWeek(slug, week);
 }
 
+// Move a question's form and its response Sheet to the Drive trash (restorable for 30 days).
+function adminRemoveQuestion(slug, week, formId) {
+  needAdmin_();
+  const c = course_(slug);
+  const file = DriveApp.getFileById(formId);
+  const place = placeOfForm_(formId);
+  if (!place || place.c.slug !== slug || place.week !== Number(week)) throw new Error('This form is not in ' + slug + ' week ' + week + '.');
+  const sid = FormApp.openById(formId).getDestinationId();
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'onPollSubmit' && t.getTriggerSourceId() === formId) ScriptApp.deleteTrigger(t);
+  });
+  file.setTrashed(true);
+  if (sid) { try { DriveApp.getFileById(sid).setTrashed(true); } catch (e) { /* Sheet already gone */ } }
+  CacheService.getScriptCache().removeAll(['forms:' + c.folderId + ':' + week, 'data:' + c.folderId + ':' + week]);
+  return adminWeek(slug, week);
+}
+
 // ---------- Answers ----------
 
 function adminResponses(slug, week) {

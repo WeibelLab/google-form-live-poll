@@ -186,7 +186,8 @@ function renderWeek(d) {
       <a href="${esc(q.url)}" target="_blank">student form</a> · <a href="${esc(q.editUrl)}" target="_blank">edit in Google Forms</a></span></h3>
       ${editor(id, q, locked)}
       <div class="row">${locked ? '<span class="muted">Has answers: delete them on the Answers tab before changing the question.</span>'
-        : `<button class="act" onclick="saveQ(${q.n})">Save</button>`}</div></div>`;
+        : `<button class="act" onclick="saveQ(${q.n})">Save</button>`}
+        <span style="flex:1"></span><button class="sec" style="color:var(--red);border-color:var(--red)" onclick="removeQ('${q.formId}', ${q.n}, ${q.responses})">Remove question</button></div></div>`;
   }).join('') || '<p class="muted">No questions in this week yet.</p>';
   d.questions.forEach(q => showFields('q' + q.n));
   $('qnew').innerHTML = editor('qn', null, false) + '<div class="row"><button class="act" onclick="addQ()">Add question</button></div>';
@@ -197,6 +198,13 @@ async function saveQ(n) {
   msg('Saving…', 1);
   renderWeek(await call('adminSaveQuestion', slug, Number($('qweek').value), n, read('q' + n)));
   msg('Saved. The board shows the change within 30 seconds.', 1);
+}
+async function removeQ(formId, n, answers) {
+  const warn = answers ? `Q${n} has ${answers} answer${answers === 1 ? '' : 's'}. They will no longer show on the board or count for participation credit.\n\n` : '';
+  if (!confirm(warn + `Remove Q${n}? The form and its response Sheet move to the Drive trash (restorable for 30 days).`)) return;
+  msg('Removing…', 1);
+  renderWeek(await call('adminRemoveQuestion', slug, Number($('qweek').value), formId));
+  msg(`Q${n} removed. It disappears from the board within 30 seconds.`, 1);
 }
 async function addQ() {
   msg('Creating the form…', 1);
