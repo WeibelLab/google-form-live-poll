@@ -89,14 +89,25 @@ The script owner (the instructor who set up the project) needs edit access to th
 
 ## Class instances
 
-A class instance (for example "CSE 291A Fall 2026" or "CSE 291A Winter 2027") is one course folder plus a short name used in links. Create one on the admin page, **New course** tab:
+Each offering of a class (for example CSE 291A Fall 2026 and CSE 291A Fall 2027) is its own course: its own folder, forms, answers, credit Sheet and board links. The **Course** dropdown at the top of the admin page switches between them; it shows the title and the term, for example "CSE 291A: Human-Centered AI (Fall 2026)".
+
+| | Fall 2026 | Fall 2027 (example) |
+|---|---|---|
+| Short name in links | `cse291a` | `cse291a-fa27` |
+| Course folder | Fall 2026 folder | new folder |
+| Board link | `?course=cse291a&week=N` | `?course=cse291a-fa27&week=N` |
+
+To start a new offering, admin page, **New course** tab:
 
 1. Create the course folder in a Shared Drive (or share a folder with the team) and give the script owner edit access.
-2. Fill in title, short name for links (e.g. `cse291a-wi27`), folder link, first class date, number of weeks and questions per week, email domain.
-3. **Create course folders**. Optionally open the style master and change the header image or color (palette icon).
-4. **Create the forms**. Then edit the questions on the Questions tab. Board links are on the Board links tab.
+2. Fill in title, term, short name for links, folder link, first class date, number of weeks, questions per week, email domain.
+3. **Copy questions from**: pick last year's offering to start from its questions, types and choices (answers are never copied). Weeks the old course doesn't have get templates.
+4. **Create course folders**. Optionally open the style master and change the header image or color (palette icon).
+5. **Create the forms**. Then review the questions on the Questions tab. Board links are on the Board links tab.
 
-Google allows 20 triggers per script; each running course uses up to 6 (current and next week), so one script serves about 3 courses at the same time. Older courses keep working on the board, with updates every 3 seconds instead of 2.
+The title and term of a course can be changed later (Board links tab). The short name cannot, because board links and slide buttons use it.
+
+Past offerings keep working: boards, answers and credit stay available. One week after its last class a course stops using live-update triggers (Google allows 20 per script) and its board refreshes every 3 seconds instead.
 
 ## For TAs: running a class
 
