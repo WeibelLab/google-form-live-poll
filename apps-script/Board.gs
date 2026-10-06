@@ -272,8 +272,12 @@ function callClaude_(apiKey, question, answers, prevLabels) {
   const parsed = JSON.parse(text);
   const counts = parsed.themes.map(function () { return 0; });
   parsed.assignments.slice(0, answers.length).forEach(function (t) { if (t >= 0 && t < counts.length) counts[t]++; });
+  const assign = parsed.assignments.slice(0, answers.length);
   return parsed.themes.map(function (t, i) {
-    const rep = answers[t.representative] !== undefined ? answers[t.representative] : '';
+    // The example must be an answer assigned to this theme.
+    let ri = t.representative;
+    if (assign[ri] !== i) ri = assign.indexOf(i);
+    const rep = ri >= 0 && answers[ri] !== undefined ? answers[ri] : '';
     return { label: t.label, summary: t.summary, count: counts[i], example: rep.slice(0, 300) };
   }).sort(function (a, b) { return b.count - a.count; });
 }

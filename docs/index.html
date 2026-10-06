@@ -36,13 +36,15 @@ main{display:flex;gap:20px;padding:20px 24px;height:calc(100vh - 74px)}
 .grow .seg{height:100%;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;transition:width .5s;white-space:nowrap;overflow:hidden}
 .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:15px;margin:6px 0 4px}
 .legend i{display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:6px;vertical-align:-2px}
-.theme{margin:12px 0}
+.theme{margin:0 0 14px;padding:10px 14px 12px;border-left:5px solid var(--gold);background:#f8f9fc;border-radius:8px}
 .theme .head{display:flex;align-items:center;gap:12px;font-size:clamp(16px,1.6vw,22px);font-weight:700;color:var(--navy)}
 .theme .trk{flex:1;background:var(--track);border-radius:8px;height:30px;overflow:hidden}
 .theme .fill{height:100%;background:var(--gold);transition:width .5s}
 .theme .cnt{width:60px;text-align:right}
 .theme .sum{font-size:15px;color:#334;margin:4px 0 2px}
-.theme .ex{font-size:15px;color:var(--muted);font-style:italic}
+.theme .ex{font-size:15px;color:var(--muted)}
+.theme .ex b{font-style:normal;color:#556;font-weight:600}
+.theme .ex i{color:#334}
 #cloud{width:100%;height:100%;display:block}
 aside{width:280px;background:#fff;border-radius:14px;padding:16px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.06)}
 aside .h{font-weight:700;color:var(--navy);font-size:20px;margin-bottom:8px}
@@ -135,7 +137,7 @@ function draw(force) {
   } else if (showThemes) {
     const max = Math.max(1, ...th.themes.map(t => t.count));
     for (const t of th.themes) {
-      v.insertAdjacentHTML('beforeend', `<div class="theme"><div class="head"><span style="min-width:30%">${esc(t.label)}</span><div class="trk"><div class="fill" style="width:${Math.round(100 * t.count / max)}%"></div></div><span class="cnt">${t.count}</span></div><div class="sum">${esc(t.summary)}</div>${t.example ? `<div class="ex">“${esc(t.example)}”</div>` : ''}</div>`);
+      v.insertAdjacentHTML('beforeend', `<div class="theme"><div class="head"><span style="min-width:30%">${esc(t.label)}</span><div class="trk"><div class="fill" style="width:${Math.round(100 * t.count / max)}%"></div></div><span class="cnt">${t.count}</span></div><div class="sum">${esc(t.summary)}</div>${t.example ? `<div class="ex"><b>Example answer:</b> <i>“${esc(t.example)}”</i></div>` : ''}</div>`);
     }
   } else {
     const c = document.createElement('canvas'); c.id = 'cloud'; v.appendChild(c);
